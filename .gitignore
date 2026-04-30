@@ -18,3 +18,4 @@ __pycache__
 .yarn/unplugged
 .pnp.*
 .DS_Store
+agents/local/**/private.pem

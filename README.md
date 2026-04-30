@@ -1,35 +1,131 @@
 # Factum
 
-Factum is an evidence workflow app for tabular datasets. It lets you upload or import data, run an experiment workflow, and return a proof-backed result with saved artifacts.
+Factum is an evidence workflow app for tabular datasets with a **Gensyn-first multi-agent architecture**.
+It lets you upload or import data, run an orchestrated experiment, watch specialist agents work through validation/strategy/training, and return a proof-backed result with saved artifacts.
 
 ## What this project does
 
-Current supported flow:
+Current end-to-end flow:
 
 ```txt
 Dataset upload or connector import
-→ API orchestration
+→ API experiment orchestration
 → queue job
-→ dataset validation
-→ model / backtest run
-→ verification
+→ classify agent
+→ planner agent
+→ validation agent
+→ diagnosis agent
+→ strategy agent
+→ training agent
+→ reflection agent
+→ verifier agent
+→ answer agent
 → proof receipt creation
 → result shown in the web app
 ```
 
-## Services in the local stack
+The app now supports:
+- live experiment progress
+- SSE streaming to the UI
+- iterative attempts with reflections
+- user guidance messages back into the experiment
+- Gensyn AXL-routed specialist workers
+- Gensyn-first runtime mode for hackathon/demo usage
+
+---
+
+## Architecture overview
+
+### Primary services
 
 - `apps/web` — Next.js frontend on `http://localhost:3000`
-- `apps/api` — Hono API on `http://localhost:4000`
-- `workers/ml-runner` — FastAPI ML worker on `http://localhost:8000`
+- `apps/api` — Hono API + experiment orchestrator on `http://localhost:4000`
+- `workers/ml-runner` — FastAPI ML runtime on `http://localhost:8000`
 - `postgres` — PostgreSQL on `localhost:5432`
 - `redis` — Redis on `localhost:6379`
 
-## Run everything together locally
+### Gensyn/agent runtime pieces
 
-This is the exact workflow to get the full local stack running.
+Factum now has a **swarm of specialist workers** coordinated by the API orchestrator.
 
-### 1. Prerequisites
+AXL workers currently supported:
+- `evidence-classifier`
+- `experiment-planner`
+- `validation-agent`
+- `diagnosis-agent`
+- `strategy-agent`
+- `training-agent`
+- `reflection-agent`
+- `verifier`
+- `answer-generator`
+
+### Runtime modes
+
+Two modes exist:
+
+- `FACTUM_MODE=gensyn`
+  - Gensyn-first mode
+  - missing AXL peers should fail hard
+  - intended for hackathon/demo compliance
+- `FACTUM_MODE=dev`
+  - local fallback mode
+  - local service handlers remain available if AXL is unavailable
+
+For hackathon/demo runs, use:
+
+```bash
+FACTUM_MODE=gensyn
+GENSYN_AXL_ENABLED=true
+GENSYN_AXL_LOCAL_FALLBACK=false
+```
+
+---
+
+## Current experiment workflow
+
+### Orchestrator flow
+
+```txt
+1. classify request
+2. build experiment plan
+3. validate dataset through validation agent
+4. diagnose schema/data risks
+5. choose strategy for attempt N
+6. run training attempt through training agent
+7. reflect on result/failure
+8. repeat until success / stop condition
+9. verify result
+10. generate answer
+11. create receipt/proof artifacts
+```
+
+### What the UI shows
+
+The UI now exposes:
+- current stage
+- progress log
+- attempts
+- strategy decisions
+- dataset diagnosis
+- reflections
+- experiment chat/guidance
+- live stream status (`Live` / polling fallback)
+
+### Experiment chat
+
+Users can now message an experiment to:
+- guide the agent
+- constrain behavior
+- ask for reruns
+- request simpler or alternate modeling approaches
+
+---
+
+## Local development setup
+
+For a **repeatable run order** (infra, local AXL mesh vs fast dev, production checks) and how **`FACTUM_MODE` relates to Gensyn/AXL**, see [docs/nodes-runbook.md](./docs/nodes-runbook.md).
+
+## 1. Prerequisites
 
 Install these first:
 
@@ -39,10 +135,9 @@ Install these first:
 - Docker
 
 Optional but useful:
-
 - `curl`
 
-### 2. Install JavaScript dependencies
+## 2. Install JavaScript dependencies
 
 From the repo root:
 
@@ -50,128 +145,236 @@ From the repo root:
 yarn install
 ```
 
-### 3. Create your local environment file
+## 3. Create your local env file
 
-The API reads `.env` from the repo root.
-
-Create a local `.env` file in the repository root and set the required values from:
-
-- `docs/ENVIRONMENT_VARIABLES.md`
-
-Minimum local values you need:
+Use the root `vars` file as the template.
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:4000
-NODE_ENV=development
-PORT=4000
-APP_URL=http://localhost:3000
-API_URL=http://localhost:4000
-ML_WORKER_URL=http://localhost:8000
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/factum
-REDIS_URL=redis://localhost:6379
-OPENAI_API_KEY=...
-LOCAL_UPLOAD_DIR=./uploads
-LOCAL_ARTIFACT_DIR=./artifacts
-LOCAL_CONNECTOR_DIR=./connector-data
-RUN_QUEUE_WORKER=true
-OG_STORAGE_RPC=...
-OG_STORAGE_INDEXER_RPC=...
-OG_STORAGE_PRIVATE_KEY=...
-OG_COMPUTE_RPC=...
-OG_COMPUTE_PRIVATE_KEY=...
-OG_COMPUTE_PROVIDER_ADDRESS=...
-OG_CHAIN_RPC=...
-OG_CHAIN_PRIVATE_KEY=0x...
-OG_CHAIN_RECEIPT_REGISTRY_ADDRESS=0x...
+cp vars .env
 ```
 
-If you want Kaggle imports, also add:
+Important env loading behavior:
+- API loads root `.env`
+- then loads `apps/api/.env` with override behavior
 
-```bash
-KAGGLE_API_TOKEN=...
-KAGGLE_PYTHON_BIN=python3
-```
+So if something seems ignored, check whether `apps/api/.env` overrides it.
 
-### 4. Start Postgres and Redis
+## 4. Start Postgres and Redis
 
 ```bash
 docker compose up -d postgres redis
 ```
 
-### 5. Start the full app stack
+## 5. Run DB migrations
 
-From the repo root, run:
+```bash
+yarn db:migrate
+```
+
+## 6. Start the app stack
+
+### Standard local stack
 
 ```bash
 yarn dev
 ```
 
-That starts these three app processes together:
-
+This starts:
 - web
 - api
 - ml worker
 
-Notes:
+### Gensyn worker swarm in a separate terminal
 
-- The API runs database migrations automatically on startup.
-- The ML worker creates `workers/ml-runner/.venv` on first boot and installs Python dependencies automatically.
-- The API also starts the queue worker when `RUN_QUEUE_WORKER=true`.
+To run all AXL workers together:
 
-### 6. Verify everything is up
+```bash
+yarn dev:axl
+```
 
-Open these health checks:
+This starts:
+- classifier worker
+- planner worker
+- validation worker
+- diagnosis worker
+- strategy worker
+- training worker
+- reflection worker
+- verifier worker
+- answer worker
+
+For a full Gensyn-first local run, you usually want:
+
+### Terminal 1
+```bash
+docker compose up -d postgres redis
+```
+
+### Terminal 2
+```bash
+yarn worker
+```
+
+### Terminal 3
+```bash
+yarn api
+```
+
+### Terminal 4
+```bash
+yarn web
+```
+
+### Terminal 5
+```bash
+yarn dev:axl
+```
+
+---
+
+## Health / verification commands
+
+### App health
 
 ```bash
 curl http://localhost:4000/health
 curl http://localhost:8000/health
 ```
 
-Then open the web app:
+### UI
+
+Open:
 
 ```txt
 http://localhost:3000
 ```
 
-## Manual startup, if you want each service in its own terminal
-
-Use this if you do not want `yarn dev`.
-
-### Terminal 1: infrastructure
+### Typechecks
 
 ```bash
-docker compose up -d postgres redis
+yarn typecheck
+yarn workspace @factum/api typecheck
+yarn workspace @factum/agent-sdk typecheck
+yarn workspace @factum/shared-types build
 ```
 
-### Terminal 2: ML worker
+---
+
+## Important env groups
+
+## Core API/web/worker
+
+- `NEXT_PUBLIC_API_URL`
+- `NODE_ENV`
+- `PORT`
+- `APP_URL`
+- `API_URL`
+- `ML_WORKER_URL`
+- `RUN_QUEUE_WORKER`
+
+## Database / queue
+
+- `DATABASE_URL`
+- `REDIS_URL`
+
+## LLM
+
+- `OPENAI_API_KEY`
+- `LLM_MODEL`
+
+## Local file paths
+
+- `LOCAL_UPLOAD_DIR`
+- `LOCAL_ARTIFACT_DIR`
+- `LOCAL_CONNECTOR_DIR`
+
+## Gensyn AXL
+
+- `FACTUM_MODE`
+- `GENSYN_AXL_ENABLED`
+- `GENSYN_AXL_API_URL`
+- `GENSYN_AXL_LOCAL_FALLBACK`
+- `GENSYN_AXL_TIMEOUT_MS`
+- `GENSYN_AXL_POLL_INTERVAL_MS`
+- `AXL_PEER_CLASSIFIER`
+- `AXL_PEER_PLANNER`
+- `AXL_PEER_VALIDATION`
+- `AXL_PEER_DIAGNOSIS`
+- `AXL_PEER_STRATEGY`
+- `AXL_PEER_TRAINING`
+- `AXL_PEER_REFLECTION`
+- `AXL_PEER_VERIFIER`
+- `AXL_PEER_ANSWER`
+
+## Gensyn REE
+
+- `GENSYN_REE_ENABLED`
+- `GENSYN_REE_COMMAND`
+- `GENSYN_REE_MODE`
+- `GENSYN_REE_VERIFIER_MODEL`
+- `GENSYN_REE_TASKS_ROOT`
+- `GENSYN_REE_MAX_NEW_TOKENS`
+- `GENSYN_REE_TEMPERATURE`
+
+## Gensyn chain
+
+- `GENSYN_CHAIN_ENABLED`
+- `GENSYN_NETWORK`
+- `GENSYN_CHAIN_RPC`
+- `GENSYN_MAINNET_RPC`
+- `GENSYN_TESTNET_RPC`
+- `GENSYN_CHAIN_ID`
+- `GENSYN_CHAIN_PRIVATE_KEY`
+- `GENSYN_CHAIN_REGISTRY_ADDRESS`
+
+## Kaggle connector
+
+- `KAGGLE_API_TOKEN`
+- `KAGGLE_PYTHON_BIN`
+
+## 0G / receipt infrastructure
+
+- `OG_STORAGE_RPC`
+- `OG_STORAGE_INDEXER_RPC`
+- `OG_STORAGE_PRIVATE_KEY`
+- `OG_COMPUTE_RPC`
+- `OG_COMPUTE_PRIVATE_KEY`
+- `OG_COMPUTE_PROVIDER_ADDRESS`
+- `OG_CHAIN_RPC`
+- `OG_CHAIN_PRIVATE_KEY`
+- `OG_CHAIN_RECEIPT_REGISTRY_ADDRESS`
+
+---
+
+## Recommended modes
+
+Mode profiles and per-run checklists: [docs/nodes-runbook.md](./docs/nodes-runbook.md).
+
+## Fast local dev mode
+
+Use this when you want the app working even if AXL peers are not configured:
 
 ```bash
-yarn worker
+FACTUM_MODE=dev
+GENSYN_AXL_ENABLED=false
+GENSYN_AXL_LOCAL_FALLBACK=true
+GENSYN_REE_ENABLED=false
 ```
 
-### Terminal 3: API
+## Full Gensyn-first mode
+
+Use this for hackathon/demo compliance:
 
 ```bash
-yarn api
+FACTUM_MODE=gensyn
+GENSYN_AXL_ENABLED=true
+GENSYN_AXL_LOCAL_FALLBACK=false
+GENSYN_REE_ENABLED=true
 ```
 
-### Terminal 4: web app
+Plus set all `AXL_PEER_*` values.
 
-```bash
-yarn web
-```
-
-## Exact local workflow after startup
-
-Once the stack is running:
-
-1. Open `http://localhost:3000`
-2. Upload a CSV or import a dataset through a connector
-3. Create an experiment
-4. The API queues the experiment
-5. The ML worker runs validation, training, and backtesting
-6. The API assembles the result and proof receipt
-7. Review results in the web app
+---
 
 ## Common commands
 
@@ -181,25 +384,37 @@ Once the stack is running:
 yarn dev
 ```
 
-### Start only web
+### Start web only
 
 ```bash
 yarn web
 ```
 
-### Start only API
+### Start API only
 
 ```bash
 yarn api
 ```
 
-### Start only ML worker
+### Start ML worker only
 
 ```bash
 yarn worker
 ```
 
-### Run typechecks
+### Start AXL swarm only
+
+```bash
+yarn dev:axl
+```
+
+### Run migrations
+
+```bash
+yarn db:migrate
+```
+
+### Run all typechecks
 
 ```bash
 yarn typecheck
@@ -217,9 +432,60 @@ yarn test
 yarn clean
 ```
 
-## Shut everything down
+---
 
-Stop the app processes with `Ctrl+C`.
+## Troubleshooting
+
+## API boots but experiments fail immediately
+
+Usually one of these:
+- required env vars are missing
+- `apps/api/.env` overrides root `.env`
+- Postgres or Redis is not running
+- `RUN_QUEUE_WORKER` is false
+
+## UI works but experiment stays idle
+
+Usually one of these:
+- queue worker is not running
+- Redis is down
+- experiment was never enqueued
+
+## Gensyn mode fails fast
+
+Usually one of these:
+- `FACTUM_MODE=gensyn` but one or more `AXL_PEER_*` vars are missing
+- `GENSYN_AXL_ENABLED` is false
+- AXL API is not reachable at `GENSYN_AXL_API_URL`
+- AXL workers are not running
+
+## Validation/training issues
+
+Usually one of these:
+- dataset path is invalid on the worker machine
+- Kaggle Python path is wrong
+- ML worker is down
+- plan required columns do not exist
+
+## Kaggle issues
+
+Check:
+- `KAGGLE_API_TOKEN`
+- `KAGGLE_PYTHON_BIN`
+- that the referenced Python binary exists
+
+## Web loads but actions fail
+
+Usually one of these:
+- API is not running
+- `NEXT_PUBLIC_API_URL` is wrong
+- browser is calling stale dev server values
+
+---
+
+## Shutdown
+
+Stop app processes with `Ctrl+C`.
 
 Stop infrastructure with:
 
@@ -227,95 +493,8 @@ Stop infrastructure with:
 docker compose down
 ```
 
-If you also want to remove the local Postgres volume:
+To also remove Postgres volume:
 
 ```bash
 docker compose down -v
 ```
-
-## Troubleshooting
-
-### API fails at boot
-
-Usually one of these:
-
-- required env vars are missing
-- `DATABASE_URL` is wrong
-- `REDIS_URL` is wrong
-- Postgres or Redis is not running
-
-### ML worker fails on first startup
-
-Usually one of these:
-
-- Python `3.11+` is missing
-- virtualenv creation failed
-- Python dependency install failed
-
-### Web loads but actions fail
-
-Usually one of these:
-
-- API is not running
-- `NEXT_PUBLIC_API_URL` is wrong
-- ML worker is not running
-
-### Kaggle import fails
-
-Usually one of these:
-
-- `KAGGLE_API_TOKEN` is missing or invalid
-- `KAGGLE_PYTHON_BIN` points to a missing Python interpreter
-
-## Project structure
-
-### `apps/`
-
-- `apps/web` — Next.js frontend for uploads, experiment creation, status, and results
-- `apps/api` — Hono API for datasets, experiments, connectors, orchestration, and proof assembly
-
-### `workers/`
-
-- `workers/ml-runner` — Python/FastAPI worker that performs dataset checks, training, and backtesting
-
-### `packages/`
-
-- `packages/shared-types` — shared request/response and domain types
-- `packages/connector-sdk` — connector interfaces
-- `packages/kaggle-connector` — Kaggle dataset import connector
-- `packages/url-connector` — public CSV URL import connector
-- `packages/proof-receipts` — proof receipt helpers and hashing utilities
-- `packages/og-storage` — 0G storage client code
-- `packages/og-compute` — 0G compute client code
-- `packages/og-chain` — 0G chain registration client code
-- `packages/openclaw-adapter` — adapter layer used by the current runtime boundary
-- `packages/gensyn-axl`, `packages/gensyn-ree`, `packages/gensyn-chain` — older optional integration packages still present in the repo but not part of the minimal supported flow
-
-### `agents/`
-
-- prompt assets used by the API’s internal agent stages
-
-### `contracts/`
-
-- onchain registry contracts related to proof receipts
-
-### `examples/`
-
-- sample datasets and example project assets
-
-### `scripts/`
-
-- local helper scripts
-
-### `docs/`
-
-- minimal project docs only
-
-### `axl/`
-
-- bundled upstream AXL source tree; not required for the default local workflow
-
-## Supporting docs
-
-- [`docs/LOCAL_DEVELOPMENT.md`](./docs/LOCAL_DEVELOPMENT.md)
-- [`docs/ENVIRONMENT_VARIABLES.md`](./docs/ENVIRONMENT_VARIABLES.md)

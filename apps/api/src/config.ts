@@ -10,6 +10,8 @@ const repoRoot = path.resolve(apiRoot, "..", "..");
 
 dotenv.config({ path: path.join(repoRoot, ".env") });
 dotenv.config({ path: path.join(apiRoot, ".env"), override: true });
+/** Local multi-node AXL peer keys from `yarn local:axl` (gitignored). */
+dotenv.config({ path: path.join(repoRoot, ".env.local.axl"), override: true });
 
 const envSchema = z.object({
   FACTUM_MODE: z.enum(["gensyn", "dev"]).default("gensyn"),

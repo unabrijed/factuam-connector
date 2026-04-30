@@ -34,8 +34,12 @@ function findMissingColumns(plan: ExperimentPlan, datasetSchema: unknown): strin
   return plan.requiredColumns.filter((column) => !set.has(column));
 }
 
-function terminalStatusFromValidation(report: DataQualityReport) {
+function terminalStatusFromValidation(
+  report: DataQualityReport,
+  failureReason: ValidateResult["failure_reason"] | undefined
+) {
   if (report.leakageDetected) return "REJECTED_DATA_LEAKAGE" as const;
+  if (failureReason === "nan_rate_exceeded") return "FAILED_DATA_VALIDATION" as const;
   return "REJECTED_INSUFFICIENT_DATA" as const;
 }
 
@@ -364,7 +368,11 @@ export class AgentOrchestratorService {
             extra: { experimentId }
           });
         }
-        await this.experiments.fail(experimentId, terminalStatusFromValidation(validation), validationResult.error ?? (validationResult.warnings?.join("; ") || "Dataset validation failed"));
+        await this.experiments.fail(
+          experimentId,
+          terminalStatusFromValidation(validation, validationResult.failure_reason),
+          validationResult.error ?? (validationResult.warnings?.join("; ") || "Dataset validation failed")
+        );
         return;
       }
 

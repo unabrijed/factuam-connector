@@ -1,0 +1,12 @@
+{
+  "worker": "diagnosis-agent",
+  "status": "idle",
+  "pid": 63019,
+  "apiBaseUrl": "http://127.0.0.1:9002",
+  "pollIntervalMs": 250,
+  "startedAt": "2026-04-30T19:55:53.047Z",
+  "updatedAt": "2026-04-30T20:38:51.068Z",
+  "processedCount": 0,
+  "lastErrorAt": "2026-04-30T19:56:33.722Z",
+  "lastErrorMessage": "fetch failed"
+}

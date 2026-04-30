@@ -1,0 +1,12 @@
+{
+  "worker": "strategy-agent",
+  "status": "idle",
+  "pid": 63021,
+  "apiBaseUrl": "http://127.0.0.1:9002",
+  "pollIntervalMs": 250,
+  "startedAt": "2026-04-30T19:55:52.947Z",
+  "updatedAt": "2026-04-30T20:38:51.012Z",
+  "processedCount": 0,
+  "lastErrorAt": "2026-04-30T19:56:33.637Z",
+  "lastErrorMessage": "fetch failed"
+}
