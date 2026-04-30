@@ -1,0 +1,11 @@
+{
+  "name": "@factum/ml-runner",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "build": "python3 -m compileall app src",
+    "typecheck": "python3 -m compileall app src",
+    "test": "PYTHONPATH=. python3 tests/run_tests.py"
+  }
+}

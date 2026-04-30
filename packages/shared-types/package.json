@@ -1,0 +1,15 @@
+{
+  "name": "@factum/shared-types",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"No tests in shared-types\""
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}

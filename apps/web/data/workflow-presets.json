@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "sampleDataset": {
+    "publicPath": "/samples/demo-campaigns.csv",
+    "uploadName": "Demo campaigns (sample)",
+    "description": "Small campaign table (channels, rates, revenue). Upload this in “Upload data”, then choose a preset below and run the evidence workflow."
+  },
+  "presets": [
+    {
+      "id": "campaign-next-best",
+      "label": "Next campaign — ₹50k",
+      "query": "Using budget, channel, audience, click_rate, conversion_rate, and revenue, recommend the next campaign to run with a ₹50,000 budget. Name the closest winning pattern in this dataset and explain why.",
+      "note": "Best default prompt for demo-campaigns.csv."
+    },
+    {
+      "id": "campaign-roi-channel",
+      "label": "ROI — best channel",
+      "query": "Rank the campaigns by revenue per dollar of budget, then compare LinkedIn, Email, and Meta to identify which channel looks strongest in this dataset.",
+      "note": "Matches the sample CSV columns exactly."
+    },
+    {
+      "id": "campaign-audience-offer",
+      "label": "Audience + offer",
+      "query": "Which audience and offer_type combination appears strongest based on conversion_rate and revenue? Summarize the evidence from the uploaded dataset.",
+      "note": "Good fit for the sample campaign table."
+    },
+    {
+      "id": "campaign-b2b-saas",
+      "label": "B2B SaaS recommendation",
+      "query": "Focus on rows where audience is B2B SaaS. Based on budget, click_rate, conversion_rate, and revenue, what messaging and offer_type should I repeat next?",
+      "note": "Targeted prompt aligned to actual sample rows."
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+:root {
+  color-scheme: dark;
+  --bg: #07111f;
+  --bg-soft: #0b1627;
+  --surface: rgba(8, 17, 31, 0.7);
+  --surface-elevated: rgba(12, 22, 39, 0.82);
+  --surface-strong: rgba(14, 26, 46, 0.96);
+  --card: rgba(11, 21, 37, 0.82);
+  --card-strong: rgba(9, 18, 33, 0.94);
+  --border: rgba(148, 163, 184, 0.16);
+  --border-strong: rgba(148, 163, 184, 0.26);
+  --text: #eff6ff;
+  --text-soft: #b8c9e3;
+  --muted: #7f95b5;
+  --accent: #78d2ff;
+  --accent-strong: #8b7cff;
+  --accent-faint: rgba(120, 210, 255, 0.14);
+  --success: #57e3a7;
+  --warning: #ffd26f;
+  --danger: #ff8da1;
+  --shadow-soft: 0 22px 60px rgba(0, 0, 0, 0.26);
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #edf4ff;
+  --bg-soft: #f6f9ff;
+  --surface: rgba(255, 255, 255, 0.76);
+  --surface-elevated: rgba(255, 255, 255, 0.88);
+  --surface-strong: rgba(255, 255, 255, 0.96);
+  --card: rgba(255, 255, 255, 0.78);
+  --card-strong: rgba(255, 255, 255, 0.94);
+  --border: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.14);
+  --text: #081120;
+  --text-soft: #42556f;
+  --muted: #6f829e;
+  --accent: #0ea5e9;
+  --accent-strong: #6d5efc;
+  --accent-faint: rgba(14, 165, 233, 0.1);
+  --success: #029c62;
+  --warning: #c57c00;
+  --danger: #d43d62;
+  --shadow-soft: 0 18px 40px rgba(18, 28, 45, 0.08);
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(87, 181, 255, 0.14), transparent 26%),
+    radial-gradient(circle at top right, rgba(109, 94, 252, 0.12), transparent 24%),
+    linear-gradient(180deg, var(--bg-soft), var(--bg));
+  color: var(--text);
+  font-family: Inter, "SF Pro Display", "SF Pro Text", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-feature-settings: "ss01" 1, "cv01" 1, "cv11" 1;
+  letter-spacing: -0.015em;
+}
+
+a {
+  color: var(--accent);
+  transition: color 180ms ease;
+}
+
+a:hover {
+  color: var(--accent-strong);
+}
+
+::selection {
+  background: rgba(120, 210, 255, 0.24);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.04em;
+}
+
+@layer utilities {
+  .glass-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(16px);
+  }
+
+  .panel-strong {
+    background: var(--card-strong);
+    border: 1px solid var(--border-strong);
+  }
+
+  .text-muted {
+    color: var(--muted);
+  }
+
+  .text-soft {
+    color: var(--text-soft);
+  }
+}

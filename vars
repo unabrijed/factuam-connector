@@ -1,0 +1,124 @@
+# Factum — environment template (copy into .env)
+#
+# Copy everything below into `.env` at the **repository root**
+# (the API loads root `.env`, then `apps/api/.env` for overrides).
+# Do not commit real secrets. Replace placeholders before running.
+#
+# Reference: docs/ENVIRONMENT_VARIABLES.md
+
+# ------------------------------------------------------------------------------
+# Core (API)
+# ------------------------------------------------------------------------------
+NODE_ENV=development
+PORT=4000
+APP_URL=http://localhost:3000
+API_URL=http://localhost:4000
+ML_WORKER_URL=http://localhost:8000
+RUN_QUEUE_WORKER=true
+
+# ------------------------------------------------------------------------------
+# Database & Redis
+# ------------------------------------------------------------------------------
+# Matches docker-compose default DB name `factum` when using repo Postgres.
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/factum
+REDIS_URL=redis://localhost:6379
+
+# ------------------------------------------------------------------------------
+# OpenAI / LLM
+# ------------------------------------------------------------------------------
+OPENAI_API_KEY=sk-your-openai-key
+LLM_MODEL=gpt-4.1-mini
+
+# ------------------------------------------------------------------------------
+# Local paths (API + ML worker)
+# ------------------------------------------------------------------------------
+# ML worker also reads LOCAL_ARTIFACT_DIR (workers/ml-runner).
+LOCAL_UPLOAD_DIR=./uploads
+LOCAL_ARTIFACT_DIR=./artifacts
+LOCAL_CONNECTOR_DIR=./connector-data
+
+# ------------------------------------------------------------------------------
+# Gensyn — REE (verifier, optional)
+# ------------------------------------------------------------------------------
+GENSYN_REE_ENABLED=false
+# Use `gensyn-sdk` per Gensyn REE docs; use `ree` only for legacy `--input` JSON CLIs.
+GENSYN_REE_COMMAND=gensyn-sdk
+GENSYN_REE_MODE=reproducible
+GENSYN_REE_VERIFIER_MODEL=
+# Optional explicit tasks root (else see REE_TASKS_ROOT alias below).
+GENSYN_REE_TASKS_ROOT=
+GENSYN_REE_MAX_NEW_TOKENS=256
+GENSYN_REE_TEMPERATURE=0.3
+
+# Aliases merged in code (packages/gensyn-ree, apps/api config):
+# REE_TASKS_ROOT=/tmp/factum-ree
+# REE_MAX_NEW_TOKENS=256
+# REE_TEMPERATURE=0.3
+# HUGGINGFACE_TOKEN=   # if using gated HF models with gensyn-sdk
+
+# ------------------------------------------------------------------------------
+# Gensyn — AXL (optional agent transport)
+# ------------------------------------------------------------------------------
+GENSYN_AXL_ENABLED=false
+GENSYN_AXL_API_URL=http://127.0.0.1:9002
+# JSON map: evidence_classifier, experiment_planner, verifier, answer_generator → 64-char hex peer ids
+GENSYN_AXL_AGENT_PEERS=
+GENSYN_AXL_TIMEOUT_MS=1500
+GENSYN_AXL_POLL_INTERVAL_MS=250
+GENSYN_AXL_LOCAL_FALLBACK=true
+
+# Alias: AXL_API_URL=http://127.0.0.1:9002
+
+# ------------------------------------------------------------------------------
+# Gensyn — Chain anchoring (optional; falls back to 0G on failure or when disabled)
+# ------------------------------------------------------------------------------
+# Network IDs (docs.gensyn.network/network-information):
+#   mainnet chain id 685689 | testnet chain id 685685
+# Public RPCs (use dedicated Alchemy RPC in production):
+#   https://gensyn-mainnet.g.alchemy.com/public
+#   https://gensyn-testnet.g.alchemy.com/public
+GENSYN_CHAIN_ENABLED=false
+GENSYN_NETWORK=testnet
+GENSYN_CHAIN_RPC=
+# Aliases: GENSYN_RPC_URL=   # same role as GENSYN_CHAIN_RPC when set
+GENSYN_MAINNET_RPC=https://gensyn-mainnet.g.alchemy.com/public
+GENSYN_TESTNET_RPC=https://gensyn-testnet.g.alchemy.com/public
+GENSYN_CHAIN_ID=
+GENSYN_CHAIN_PRIVATE_KEY=
+GENSYN_CHAIN_REGISTRY_ADDRESS=
+
+# Runtime fallbacks (read in gensyn-chain.service if vars above are empty):
+# PRIVATE_KEY=0x...              # 0x + 64 hex — used if GENSYN_CHAIN_PRIVATE_KEY unset
+# FACTUM_REGISTRY_CONTRACT=0x... # 0x + 40 hex — used if GENSYN_CHAIN_REGISTRY_ADDRESS unset
+
+# ------------------------------------------------------------------------------
+# Kaggle connector (optional)
+# ------------------------------------------------------------------------------
+KAGGLE_API_TOKEN=
+KAGGLE_PYTHON_BIN=python3
+
+# ------------------------------------------------------------------------------
+# 0G — required for API boot (storage, compute, onchain receipt registry)
+# ------------------------------------------------------------------------------
+OG_STORAGE_RPC=https://your-0g-storage-rpc.example
+OG_STORAGE_INDEXER_RPC=https://your-0g-indexer.example
+OG_STORAGE_PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000001
+
+OG_COMPUTE_RPC=https://your-0g-compute-rpc.example
+OG_COMPUTE_PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000001
+OG_COMPUTE_PROVIDER_ADDRESS=0x0000000000000000000000000000000000000001
+
+OG_CHAIN_RPC=https://your-0g-chain-rpc.example
+# Must be 0x + 64 hex characters
+OG_CHAIN_PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000001
+# Must be 0x + 40 hex characters (checksum not required by schema)
+OG_CHAIN_RECEIPT_REGISTRY_ADDRESS=0x0000000000000000000000000000000000000001
+
+# ------------------------------------------------------------------------------
+# Next.js (apps/web)
+# ------------------------------------------------------------------------------
+# Browser and server proxy use this to reach the API.
+NEXT_PUBLIC_API_URL=http://localhost:4000
+
+# Optional dev UI: set to 1 to show flow test panel outside NODE_ENV=development
+# NEXT_PUBLIC_SHOW_FLOW_TEST_PANEL=0
