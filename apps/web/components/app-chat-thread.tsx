@@ -3,36 +3,60 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ConnectorManifest, ConnectorPreset } from "../lib/api";
 import { getConnectorRun, getExperiment, sendExperimentMessage } from "../lib/api";
 import { appConfig } from "../lib/config";
 import { experimentPollIntervalMs, isExperimentTerminal } from "../lib/experiment-query";
+import { AgentThinkingStrip } from "./agent-thinking-strip";
 import { ArtifactList } from "./artifact-list";
+import { ChatComposer } from "./chat-composer";
+import { ChatTranscript } from "./chat-transcript";
 import { ConnectorStageTimeline } from "./connector-stage-timeline";
 import { ExperimentTimeline } from "./experiment-timeline";
 import { Badge, Button, Card, SectionTitle, formatLabel } from "./ui";
 
-type AppChatThreadProps = {
+export type AppChatThreadProps = {
   experimentId: string;
   connectorRunId?: string | null;
   onNewChat: () => void;
+  onExperimentMeta?: (meta: { id: string; title: string; updatedAt: string; status?: string }) => void;
+  presets: ConnectorPreset[];
+  connectors: ConnectorManifest[];
+  onConnectorPresetRun: (input: { query: string; connectorRequest: ConnectorPreset["connectorRequest"] }) => void | Promise<void>;
+  onUploadRun: (input: { datasetId: string; query: string }) => void | Promise<void>;
+  experimentBusy?: boolean;
 };
 
-export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppChatThreadProps) {
+export function AppChatThread({
+  experimentId,
+  connectorRunId,
+  onNewChat,
+  onExperimentMeta,
+  presets,
+  connectors,
+  onConnectorPresetRun,
+  onUploadRun,
+  experimentBusy = false
+}: AppChatThreadProps) {
   const showDevDetails = process.env.NODE_ENV === "development";
   const queryClient = useQueryClient();
   const [guidance, setGuidance] = useState("");
   const [streamConnected, setStreamConnected] = useState(false);
+  const [runExtrasBusy, setRunExtrasBusy] = useState(false);
+
   const query = useQuery({
     queryKey: ["experiment", experimentId],
     queryFn: () => getExperiment(experimentId),
     refetchInterval: (q) => experimentPollIntervalMs(q.state.data as { status?: string } | undefined)
   });
+
   const connectorQuery = useQuery({
     queryKey: ["connector-run", connectorRunId],
     queryFn: () => getConnectorRun(connectorRunId!),
     enabled: Boolean(connectorRunId),
     refetchInterval: 2000
   });
+
   const messageMutation = useMutation({
     mutationFn: (input: { message: string; rerun?: boolean }) => sendExperimentMessage(experimentId, input),
     onSuccess: () => {
@@ -68,9 +92,20 @@ export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppCh
     };
   }, [experimentId, queryClient]);
 
+  useEffect(() => {
+    const exp = query.data;
+    if (!exp?.id) return;
+    onExperimentMeta?.({
+      id: exp.id,
+      title: exp.query ?? "Run",
+      updatedAt: exp.updatedAt ?? new Date().toISOString(),
+      status: exp.status
+    });
+  }, [query.data, onExperimentMeta]);
+
   if (query.isLoading) {
     return (
-      <div className="flex min-h-[min(24rem,50vh)] flex-col">
+      <div className="flex flex-1 items-center justify-center p-8">
         <p className="text-sm text-[var(--text-soft)]">Loading…</p>
       </div>
     );
@@ -78,7 +113,7 @@ export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppCh
 
   if (query.error) {
     return (
-      <div className="space-y-4">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
         <p className="text-sm text-[var(--danger)]">Error: {(query.error as Error).message}</p>
         <Button type="button" onClick={onNewChat}>
           New chat
@@ -91,6 +126,7 @@ export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppCh
   const backtest = experiment.latestBacktest;
   const receiptId = experiment.resultSummary?.receiptId as string | undefined;
   const currentMessage = experiment.resultSummary?.currentMessage as string | undefined;
+  const currentStage = experiment.resultSummary?.currentStage as string | undefined;
   const progress = Array.isArray(experiment.resultSummary?.progress)
     ? (experiment.resultSummary?.progress as Array<{ stage?: string; message?: string; ts?: string; details?: Record<string, unknown> }>)
     : [];
@@ -115,84 +151,50 @@ export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppCh
   const connectorStageMessage = connectorQuery.data?.sourceMeta?.stageMessage as string | undefined;
   const connectorFailed = connectorStage === "failed";
 
+  const statusLine = !terminal ? currentMessage ?? undefined : undefined;
+
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col gap-4">
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pr-1">
-        <Card className="space-y-4">
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Question</p>
-            <p className="text-sm leading-7 text-[var(--text)]">{experiment.query ?? "—"}</p>
-          </div>
+    <div className="flex h-full min-h-0 flex-1 flex-col">
+      <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border)] px-4 py-2">
+        <Badge tone={completedOk ? "success" : terminal ? "danger" : "accent"}>{formatLabel(experiment.status)}</Badge>
+        <Badge tone={streamConnected ? "success" : "default"}>{streamConnected ? "Live" : "Polling"}</Badge>
+        {experiment.confidence ? <Badge>{formatLabel(experiment.confidence)}</Badge> : null}
+        {connectorStage && !terminal ? <Badge tone="warning">{formatLabel(connectorStage)}</Badge> : null}
+      </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={completedOk ? "success" : terminal ? "danger" : "accent"}>
-              {formatLabel(experiment.status)}
-            </Badge>
-            <Badge tone={streamConnected ? "success" : "default"}>{streamConnected ? "Live" : "Polling"}</Badge>
-            {experiment.confidence ? <Badge>{formatLabel(experiment.confidence)}</Badge> : null}
-            {connectorStage && !terminal ? <Badge tone="warning">{formatLabel(connectorStage)}</Badge> : null}
-            {receiptId ? (
-              <Link
-                className="rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] px-3 py-1 text-xs font-medium text-[var(--text)] transition hover:border-[var(--accent)]"
-                href={`/proofs/${receiptId}`}
-              >
-                Open proof
-              </Link>
-            ) : null}
-          </div>
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+        <ChatTranscript
+          initialQuery={experiment.query ?? ""}
+          messages={messages}
+          finalAnswer={experiment.finalAnswer}
+          terminal={terminal}
+          completedOk={completedOk}
+          errorMessage={experiment.errorMessage}
+          statusLabel={formatLabel(experiment.status)}
+          receiptId={receiptId}
+          statusLine={statusLine ?? null}
+          connectorLine={!terminal ? connectorStageMessage ?? null : null}
+        />
 
-          {!terminal ? (
-            <div className="space-y-2">
-              <p className="text-sm text-[var(--text-soft)]">Working on it…</p>
-              {currentMessage ? <p className="text-xs text-[var(--muted)]">{currentMessage}</p> : null}
-              {connectorStageMessage ? <p className="text-xs text-[var(--muted)]">{connectorStageMessage}</p> : null}
-              {connectorRunId ? <ConnectorStageTimeline stage={connectorStage} failed={connectorFailed} /> : null}
-            </div>
-          ) : completedOk ? (
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Answer</p>
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-7 text-[var(--text)]">{experiment.finalAnswer ?? "—"}</pre>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">What failed</p>
-              <p className="text-sm text-[var(--danger)]">{experiment.errorMessage ?? formatLabel(experiment.status)}</p>
-            </div>
-          )}
-        </Card>
+        {!terminal ? (
+          <AgentThinkingStrip
+            progress={progress}
+            latestStage={typeof currentStage === "string" ? currentStage : undefined}
+            experimentStatus={experiment.status}
+            terminal={false}
+          />
+        ) : progress.length > 0 ? (
+          <AgentThinkingStrip
+            progress={progress}
+            latestStage={typeof currentStage === "string" ? currentStage : undefined}
+            experimentStatus={experiment.status}
+            terminal
+          />
+        ) : null}
 
-        <Card className="space-y-4">
-          <SectionTitle title="Guide the agent" subtitle="Add instructions, constraints, or data-cleaning suggestions. Terminal experiments will be re-queued automatically." />
-          <form
-            className="space-y-3"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!guidance.trim()) return;
-              messageMutation.mutate({ message: guidance.trim() });
-            }}
-          >
-            <textarea
-              className="min-h-[112px] w-full rounded-[24px] border border-[var(--border)] bg-[var(--surface-strong)] px-4 py-3 text-sm text-[var(--text)] outline-none transition focus:border-[var(--accent)]"
-              placeholder="Example: Drop text-heavy columns, focus on price/country/variety, and retry with a simpler regression if training fails."
-              value={guidance}
-              onChange={(event) => setGuidance(event.target.value)}
-            />
-            <div className="flex flex-wrap items-center gap-3">
-              <Button type="submit" disabled={messageMutation.isPending || !guidance.trim()}>
-                {messageMutation.isPending ? "Sending…" : "Send guidance"}
-              </Button>
-              {messageMutation.error ? (
-                <p className="text-sm text-[var(--danger)]">{(messageMutation.error as Error).message}</p>
-              ) : (
-                <p className="text-xs text-[var(--muted)]">Your guidance is saved as experiment context and used on reruns/retries.</p>
-              )}
-            </div>
-          </form>
-        </Card>
-
-        <details className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm">
-          <summary className="cursor-pointer font-medium text-[var(--text)]">View run details</summary>
-          <div className="mt-4 space-y-4">
+        <details className="rounded-[20px] border border-[var(--border)] bg-[var(--surface-strong)]/50 text-sm">
+          <summary className="cursor-pointer px-4 py-3 font-medium text-[var(--text)]">Run details &amp; artifacts</summary>
+          <div className="space-y-4 border-t border-[var(--border)] p-4">
             {!completedOk ? (
               <Card>
                 <SectionTitle title="Experiment timeline" />
@@ -202,7 +204,7 @@ export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppCh
 
             {connectorRunId ? (
               <Card>
-                <SectionTitle title="Kaggle connector" />
+                <SectionTitle title="Connector" />
                 <div className="space-y-3">
                   {connectorStageMessage ? <p className="text-sm text-[var(--text-soft)]">{connectorStageMessage}</p> : null}
                   <ConnectorStageTimeline stage={connectorStage} failed={connectorFailed} />
@@ -213,11 +215,7 @@ export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppCh
             {terminal && (experiment.confidence || backtest) ? (
               <Card className="space-y-2">
                 <SectionTitle title="Summary" />
-                <div className="grid gap-2 sm:grid-cols-3 text-sm text-[var(--text-soft)]">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.16em] text-[var(--muted)]">Status</div>
-                    <div className="mt-1 text-[var(--text)]">{formatLabel(experiment.status)}</div>
-                  </div>
+                <div className="grid gap-2 text-sm text-[var(--text-soft)] sm:grid-cols-3">
                   <div>
                     <div className="text-xs uppercase tracking-[0.16em] text-[var(--muted)]">Confidence</div>
                     <div className="mt-1 text-[var(--text)]">{experiment.confidence ?? "—"}</div>
@@ -239,43 +237,14 @@ export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppCh
               </Card>
             ) : null}
 
-            {progress.length ? (
-              <Card className="space-y-2">
-                <SectionTitle title="Progress log" />
-                <div className="space-y-2 text-xs text-[var(--text-soft)]">
-                  {progress.slice(-8).reverse().map((entry, index) => (
-                    <div key={`${entry.ts ?? "progress"}-${index}`} className="rounded-xl border border-[var(--border)] p-3">
-                      <div className="font-medium text-[var(--text)]">{entry.stage ?? "stage"}</div>
-                      <div>{entry.message ?? "—"}</div>
-                      {entry.ts ? <div className="mt-1 text-[var(--muted)]">{entry.ts}</div> : null}
-                      {entry.details && Object.keys(entry.details).length ? (
-                        <details className="mt-2">
-                          <summary className="cursor-pointer text-[var(--muted)]">Details</summary>
-                          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-3 text-[11px] leading-5 text-[var(--text-soft)]">
-                            {JSON.stringify(entry.details, null, 2)}
-                          </pre>
-                        </details>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ) : null}
-
             {diagnoses.length ? (
               <Card className="space-y-3">
-                <SectionTitle title="Dataset diagnosis" subtitle="Structured research the agent uses before choosing retries." />
+                <SectionTitle title="Dataset diagnosis" />
                 {(() => {
                   const diagnosis = (diagnoses[diagnoses.length - 1]?.diagnosisJson ?? {}) as Record<string, unknown>;
                   return (
                     <div className="space-y-3">
                       <p className="text-sm text-[var(--text)]">{String(diagnosis.summary ?? "—")}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {diagnosis.targetKind ? <Badge>{formatLabel(String(diagnosis.targetKind))}</Badge> : null}
-                        {diagnosis.targetQuality ? <Badge tone="warning">{formatLabel(String(diagnosis.targetQuality))}</Badge> : null}
-                        {diagnosis.taskTypeFit ? <Badge tone="accent">{formatLabel(String(diagnosis.taskTypeFit))}</Badge> : null}
-                        {diagnosis.textStrategy ? <Badge tone="default">{formatLabel(String(diagnosis.textStrategy))}</Badge> : null}
-                      </div>
                       <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-3 text-[11px] leading-5 text-[var(--text-soft)]">
                         {JSON.stringify(diagnosis, null, 2)}
                       </pre>
@@ -287,14 +256,14 @@ export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppCh
 
             {decisions.length ? (
               <Card className="space-y-3">
-                <SectionTitle title="Strategy decisions" subtitle="Why the manager selected each attempt strategy." />
+                <SectionTitle title="Strategy decisions" />
                 <div className="space-y-3">
                   {decisions.map((decision) => (
                     <div key={decision.id} className="rounded-[22px] border border-[var(--border)] p-4">
-                      <div className="flex items-center gap-2">
-                        <Badge tone="accent">Attempt {decision.attemptNumber}</Badge>
-                      </div>
-                      <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-3 text-[11px] leading-5 text-[var(--text-soft)]">
+                      <Badge tone="accent" className="mb-2">
+                        Attempt {decision.attemptNumber}
+                      </Badge>
+                      <pre className="overflow-x-auto whitespace-pre-wrap text-[11px] leading-5 text-[var(--text-soft)]">
                         {JSON.stringify(decision.decisionJson ?? {}, null, 2)}
                       </pre>
                     </div>
@@ -305,23 +274,15 @@ export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppCh
 
             {attempts.length ? (
               <Card className="space-y-3">
-                <SectionTitle title="Iteration attempts" subtitle="See how the agent retried different data/model strategies." />
+                <SectionTitle title="Attempts" />
                 <div className="space-y-3">
                   {attempts.map((attempt) => (
                     <div key={attempt.id} className="rounded-[22px] border border-[var(--border)] p-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge tone={attempt.status === "selected" ? "success" : attempt.status === "failed" ? "danger" : "accent"}>
-                          Attempt {attempt.attemptNumber}
-                        </Badge>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge tone="accent">#{attempt.attemptNumber}</Badge>
                         <Badge>{formatLabel(attempt.status)}</Badge>
-                        {attempt.strategy ? <Badge tone="warning">{formatLabel(attempt.strategy)}</Badge> : null}
                       </div>
                       {attempt.notes ? <p className="mt-2 text-sm text-[var(--text-soft)]">{attempt.notes}</p> : null}
-                      {attempt.summaryJson ? (
-                        <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-3 text-[11px] leading-5 text-[var(--text-soft)]">
-                          {JSON.stringify(attempt.summaryJson, null, 2)}
-                        </pre>
-                      ) : null}
                     </div>
                   ))}
                 </div>
@@ -330,35 +291,15 @@ export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppCh
 
             {reflections.length ? (
               <Card className="space-y-3">
-                <SectionTitle title="Attempt reflections" subtitle="What the agent learned from each attempt." />
-                <div className="space-y-3">
-                  {reflections.map((reflection) => (
-                    <div key={reflection.id} className="rounded-[22px] border border-[var(--border)] p-4">
-                      <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-3 text-[11px] leading-5 text-[var(--text-soft)]">
-                        {JSON.stringify(reflection.reflectionJson ?? {}, null, 2)}
-                      </pre>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ) : null}
-
-            {messages.length ? (
-              <Card className="space-y-3">
-                <SectionTitle title="Agent conversation" subtitle="Directions you gave and acknowledgements from the agent." />
-                <div className="space-y-3">
-                  {messages.slice(-12).map((message) => (
-                    <div key={message.id} className="rounded-[22px] border border-[var(--border)] p-4">
-                      <div className="flex items-center gap-2">
-                        <Badge tone={message.role === "user" ? "accent" : message.role === "agent" ? "success" : "default"}>
-                          {formatLabel(message.role)}
-                        </Badge>
-                        {message.createdAt ? <span className="text-xs text-[var(--muted)]">{message.createdAt}</span> : null}
-                      </div>
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-[var(--text)]">{message.message}</p>
-                    </div>
-                  ))}
-                </div>
+                <SectionTitle title="Reflections" />
+                {reflections.map((reflection) => (
+                  <pre
+                    key={reflection.id}
+                    className="overflow-x-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-3 text-[11px]"
+                  >
+                    {JSON.stringify(reflection.reflectionJson ?? {}, null, 2)}
+                  </pre>
+                ))}
               </Card>
             ) : null}
 
@@ -367,11 +308,37 @@ export function AppChatThread({ experimentId, connectorRunId, onNewChat }: AppCh
         </details>
       </div>
 
-      <div className="shrink-0 border-t border-[var(--border)] pt-4">
-        <Button type="button" className="w-full sm:w-auto" onClick={onNewChat}>
-          New chat
-        </Button>
-      </div>
+      <ChatComposer
+        value={guidance}
+        onChange={setGuidance}
+        onSend={() => {
+          if (!guidance.trim()) return;
+          messageMutation.mutate({ message: guidance.trim() });
+        }}
+        isSending={messageMutation.isPending}
+        presets={presets}
+        connectors={connectors}
+        busy={experimentBusy || runExtrasBusy}
+        onConnectorPresetRun={async (input) => {
+          setRunExtrasBusy(true);
+          try {
+            await onConnectorPresetRun(input);
+          } finally {
+            setRunExtrasBusy(false);
+          }
+        }}
+        onUploadRun={async (input) => {
+          setRunExtrasBusy(true);
+          try {
+            await onUploadRun(input);
+          } finally {
+            setRunExtrasBusy(false);
+          }
+        }}
+      />
+      {messageMutation.error ? (
+        <p className="px-4 pb-2 text-center text-xs text-[var(--danger)]">{(messageMutation.error as Error).message}</p>
+      ) : null}
     </div>
   );
 }

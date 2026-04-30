@@ -1,12 +1,12 @@
 {
   "worker": "reflection-agent",
-  "status": "idle",
-  "pid": 63020,
-  "apiBaseUrl": "http://127.0.0.1:9002",
-  "pollIntervalMs": 250,
-  "startedAt": "2026-04-30T19:55:53.544Z",
-  "updatedAt": "2026-04-30T20:38:51.097Z",
+  "status": "error",
+  "pid": 83422,
+  "apiBaseUrl": "",
+  "pollIntervalMs": 0,
+  "startedAt": "2026-04-30T21:09:27.427Z",
+  "updatedAt": "2026-04-30T21:10:14.007Z",
   "processedCount": 0,
-  "lastErrorAt": "2026-04-30T19:56:33.517Z",
+  "lastErrorAt": "2026-04-30T21:10:14.007Z",
   "lastErrorMessage": "fetch failed"
 }

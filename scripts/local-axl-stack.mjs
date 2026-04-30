@@ -13,11 +13,14 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import http from "node:http";
+import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   LOCAL_AX_NODES,
   LOCAL_AX_WORKER_PROCESSES,
+  ORCHESTRATOR_API_PORT,
   axlNodeBinaryPath,
   nodeConfigPath,
   repoRoot
@@ -32,13 +35,106 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function fetchPublicKey(apiPort) {
-  const url = `http://127.0.0.1:${apiPort}/topology`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
-  if (!res.ok) return null;
-  const body = await res.json();
-  const key = body?.our_public_key;
-  return typeof key === "string" && /^[0-9a-f]{64}$/i.test(key) ? key : null;
+/**
+ * Use node:http instead of fetch — Node 25+ undici can throw setTypeOfService EINVAL on some hosts.
+ * @param {number} apiPort
+ * @returns {Promise<string | null>}
+ */
+function fetchPublicKey(apiPort) {
+  return new Promise((resolve) => {
+    const req = http.request(
+      {
+        hostname: "127.0.0.1",
+        port: apiPort,
+        path: "/topology",
+        method: "GET",
+        timeout: 3000
+      },
+      (res) => {
+        let buf = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => {
+          buf += chunk;
+        });
+        res.on("end", () => {
+          if (res.statusCode !== 200) {
+            resolve(null);
+            return;
+          }
+          try {
+            const body = JSON.parse(buf);
+            const key = body?.our_public_key;
+            resolve(typeof key === "string" && /^[0-9a-f]{64}$/i.test(key) ? key : null);
+          } catch {
+            resolve(null);
+          }
+        });
+      }
+    );
+    req.on("error", () => resolve(null));
+    req.on("timeout", () => {
+      req.destroy();
+      resolve(null);
+    });
+    req.end();
+  });
+}
+
+/** @returns {Promise<boolean>} true if the port is free to bind */
+function checkListenPortFree(port, host = "127.0.0.1") {
+  return new Promise((resolve, reject) => {
+    const srv = net.createServer();
+    srv.once("error", (err) => {
+      if (/** @type {NodeJS.ErrnoException} */ (err).code === "EADDRINUSE") resolve(false);
+      else reject(err);
+    });
+    srv.listen({ port, host }, () => {
+      srv.close(() => resolve(true));
+    });
+  });
+}
+
+async function assertAxlHttpPortsFree() {
+  const ports = [...new Set(LOCAL_AX_NODES.map((n) => n.apiPort))].sort((a, b) => a - b);
+  const busy = [];
+  for (const p of ports) {
+    if (!(await checkListenPortFree(p))) busy.push(p);
+  }
+  if (busy.length) {
+    console.error(
+      `[local:axl] HTTP API port(s) already in use: ${busy.join(", ")}. ` +
+        `Stop the process holding them (e.g. another AXL node or \`lsof -i :9002\`) and retry.`
+    );
+    process.exit(1);
+  }
+}
+
+function spawnNodeChild(bin, node) {
+  const cfg = nodeConfigPath(node);
+  const cwd = path.dirname(cfg);
+  const child = spawn(bin, ["-config", path.basename(cfg)], {
+    cwd,
+    stdio: "inherit",
+    env: process.env
+  });
+  nodeChildren.push(child);
+  child.on("exit", (code, signal) => {
+    if (signal === "SIGTERM") return;
+    console.error(`[local:axl] axl node ${node.id} exited code=${code ?? "null"} signal=${signal ?? "null"}`);
+    stopAll(code ?? 1);
+  });
+  return child;
+}
+
+async function waitForPublicKeyOnPort(apiPort, label, deadlineMs) {
+  const deadline = Date.now() + deadlineMs;
+  while (Date.now() < deadline) {
+    const k = await fetchPublicKey(apiPort);
+    if (k) return k;
+    await sleep(200);
+  }
+  console.error(`[local:axl] timeout waiting for /topology on ${label} (port ${apiPort})`);
+  return null;
 }
 
 function ensureGoBinary() {
@@ -131,18 +227,30 @@ async function main() {
       console.error(`[local:axl] missing config ${cfg}`);
       process.exit(1);
     }
-    const cwd = path.dirname(cfg);
-    const child = spawn(bin, ["-config", path.basename(cfg)], {
-      cwd,
-      stdio: "inherit",
-      env: process.env
-    });
-    nodeChildren.push(child);
-    child.on("exit", (code, signal) => {
-      if (signal === "SIGTERM") return;
-      console.error(`[local:axl] axl node ${node.id} exited code=${code ?? "null"} signal=${signal ?? "null"}`);
-      stopAll(code ?? 1);
-    });
+  }
+
+  await assertAxlHttpPortsFree();
+
+  const orchestrator = LOCAL_AX_NODES.find((n) => n.id === "orchestrator");
+  const specialists = LOCAL_AX_NODES.filter((n) => n.id !== "orchestrator");
+  if (!orchestrator) {
+    console.error("[local:axl] internal: missing orchestrator in LOCAL_AX_NODES");
+    process.exit(1);
+  }
+
+  console.log("[local:axl] starting orchestrator (hub) first…");
+  spawnNodeChild(bin, orchestrator);
+  if (!(await waitForPublicKeyOnPort(ORCHESTRATOR_API_PORT, "orchestrator", 20_000))) {
+    console.error(
+      "[local:axl] orchestrator did not become ready. If port was taken between check and bind, retry."
+    );
+    stopAll(1);
+    return;
+  }
+
+  console.log("[local:axl] starting specialist nodes…");
+  for (const node of specialists) {
+    spawnNodeChild(bin, node);
   }
 
   console.log("[local:axl] waiting for HTTP /topology on all specialist nodes…");

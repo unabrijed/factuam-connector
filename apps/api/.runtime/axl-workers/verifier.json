@@ -1,12 +1,12 @@
 {
   "worker": "verifier",
-  "status": "idle",
-  "pid": 63025,
-  "apiBaseUrl": "http://127.0.0.1:9002",
-  "pollIntervalMs": 250,
-  "startedAt": "2026-04-29T09:34:00.829Z",
-  "updatedAt": "2026-04-30T20:38:51.097Z",
+  "status": "error",
+  "pid": 83515,
+  "apiBaseUrl": "",
+  "pollIntervalMs": 0,
+  "startedAt": "2026-04-30T21:09:41.119Z",
+  "updatedAt": "2026-04-30T21:10:14.015Z",
   "processedCount": 0,
-  "lastErrorAt": "2026-04-30T19:56:34.112Z",
+  "lastErrorAt": "2026-04-30T21:10:14.015Z",
   "lastErrorMessage": "fetch failed"
 }

@@ -1,12 +1,12 @@
 {
   "worker": "answer-generator",
-  "status": "idle",
-  "pid": 63018,
-  "apiBaseUrl": "http://127.0.0.1:9002",
-  "pollIntervalMs": 250,
-  "startedAt": "2026-04-29T09:34:01.175Z",
-  "updatedAt": "2026-04-30T20:38:50.994Z",
+  "status": "error",
+  "pid": 83494,
+  "apiBaseUrl": "",
+  "pollIntervalMs": 0,
+  "startedAt": "2026-04-30T21:09:46.272Z",
+  "updatedAt": "2026-04-30T21:10:13.870Z",
   "processedCount": 0,
-  "lastErrorAt": "2026-04-30T19:56:33.999Z",
+  "lastErrorAt": "2026-04-30T21:10:13.870Z",
   "lastErrorMessage": "fetch failed"
 }

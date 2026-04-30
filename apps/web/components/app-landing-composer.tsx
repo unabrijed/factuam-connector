@@ -10,6 +10,8 @@ type AppLandingComposerProps = {
   onPresetSubmit: (input: { query: string; connectorRequest: ConnectorPreset["connectorRequest"] }) => void | Promise<void>;
   presets: ConnectorPreset[];
   connectors: ConnectorManifest[];
+  /** Tighter copy when shown inside the chat shell */
+  embedded?: boolean;
 };
 
 export function AppLandingComposer({
@@ -17,7 +19,8 @@ export function AppLandingComposer({
   busy,
   onPresetSubmit,
   presets,
-  connectors
+  connectors,
+  embedded
 }: AppLandingComposerProps) {
   const [query, setQuery] = useState("");
   const [connectorMenuOpen, setConnectorMenuOpen] = useState(false);
@@ -39,10 +42,22 @@ export function AppLandingComposer({
   const blockedHint = !busy && !query.trim() ? "Add a question for the connector run." : null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className={embedded ? "mx-auto max-w-2xl space-y-5" : "mx-auto max-w-3xl space-y-6"}>
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)] sm:text-4xl">Run with a ready connector</h1>
-        <p className="text-sm text-[var(--text-soft)]">Pick a prepared connector preset, edit the question, then run.</p>
+        <h1
+          className={
+            embedded
+              ? "text-xl font-semibold tracking-tight text-[var(--text)] sm:text-2xl"
+              : "text-3xl font-semibold tracking-tight text-[var(--text)] sm:text-4xl"
+          }
+        >
+          {embedded ? "New run" : "Run with a ready connector"}
+        </h1>
+        <p className="text-sm text-[var(--text-soft)]">
+          {embedded
+            ? "Pick a connector preset below, then run. After a run starts, use + in the chat bar to upload CSV or switch connector."
+            : "Pick a prepared connector preset, edit the question, then run."}
+        </p>
         {error ? <p className="text-sm text-[var(--danger)]">{error}</p> : null}
       </div>
 

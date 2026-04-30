@@ -2,9 +2,18 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { createExperiment, getConnectorPresets, getConnectors, type ConnectorManifest, type ConnectorPreset } from "../lib/api";
+import {
+  createExperiment,
+  getConnectorPresets,
+  getConnectors,
+  type ConnectorManifest,
+  type ConnectorPreset
+} from "../lib/api";
+import { upsertExperimentRecent, listExperimentRecents, type ExperimentRecent } from "../lib/experiment-recents";
+import { AppChatShell } from "./app-chat-shell";
 import { AppChatThread } from "./app-chat-thread";
 import { AppLandingComposer } from "./app-landing-composer";
+import { ChatSidebar } from "./chat-sidebar";
 
 const EXPERIMENT_QS = "experiment";
 const CONNECTOR_RUN_QS = "connectorRun";
@@ -23,6 +32,12 @@ export function HomeShell() {
   const [connectors, setConnectors] = useState<ConnectorManifest[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recents, setRecents] = useState<ExperimentRecent[]>([]);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const refreshRecents = useCallback(() => {
+    setRecents(listExperimentRecents());
+  }, []);
 
   const syncExperimentUrl = useCallback(
     (id: string | null, runId?: string | null) => {
@@ -36,6 +51,10 @@ export function HomeShell() {
     },
     [router]
   );
+
+  useEffect(() => {
+    refreshRecents();
+  }, [refreshRecents]);
 
   useEffect(() => {
     const id = searchParams.get(EXPERIMENT_QS);
@@ -52,6 +71,19 @@ export function HomeShell() {
     getConnectors().then(setConnectors).catch(() => undefined);
   }, []);
 
+  const recordRecent = useCallback(
+    (meta: { id: string; title: string; updatedAt: string; status?: string }) => {
+      upsertExperimentRecent({
+        id: meta.id,
+        title: meta.title,
+        updatedAt: meta.updatedAt,
+        status: meta.status
+      });
+      refreshRecents();
+    },
+    [refreshRecents]
+  );
+
   async function handlePresetSubmit(input: { query: string; connectorRequest: ConnectorPreset["connectorRequest"] }) {
     setBusy(true);
     setError(null);
@@ -65,6 +97,11 @@ export function HomeShell() {
       setConnectorRunId(result.connectorRunId ?? null);
       setPhase("chat");
       syncExperimentUrl(result.experimentId, result.connectorRunId ?? null);
+      recordRecent({
+        id: result.experimentId,
+        title: input.query.trim(),
+        updatedAt: new Date().toISOString()
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to run connector preset");
     } finally {
@@ -72,34 +109,92 @@ export function HomeShell() {
     }
   }
 
+  async function handleUploadRun(input: { datasetId: string; query: string }) {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await createExperiment({
+        query: input.query,
+        mode: "upload",
+        datasetId: input.datasetId
+      });
+      setExperimentId(result.experimentId);
+      setConnectorRunId(result.connectorRunId ?? null);
+      setPhase("chat");
+      syncExperimentUrl(result.experimentId, result.connectorRunId ?? null);
+      recordRecent({
+        id: result.experimentId,
+        title: input.query.trim().slice(0, 120),
+        updatedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start upload experiment");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleConnectorFromChat(input: {
+    query: string;
+    connectorRequest: ConnectorPreset["connectorRequest"];
+  }) {
+    await handlePresetSubmit(input);
+  }
+
   function handleNewChat() {
     setExperimentId(null);
     setConnectorRunId(null);
     setPhase("landing");
+    setError(null);
     syncExperimentUrl(null);
   }
 
+  function handleSelectRecent(id: string) {
+    setExperimentId(id);
+    setConnectorRunId(null);
+    setPhase("chat");
+    syncExperimentUrl(id, null);
+  }
+
+  const sidebar = (
+    <ChatSidebar
+      recents={recents}
+      activeExperimentId={phase === "chat" ? experimentId : null}
+      onSelectRecent={handleSelectRecent}
+      onNewChat={handleNewChat}
+      open={mobileNavOpen}
+      onClose={() => setMobileNavOpen(false)}
+    />
+  );
+
   return (
-    <div className={phase === "chat" ? "flex min-h-[min(70dvh,calc(100dvh-10rem))] flex-col" : "space-y-6"}>
-      {phase === "chat" && experimentId ? (
-        <>
-          <div className="mb-3 shrink-0 space-y-1">
-            <h1 className="text-lg font-semibold text-[var(--text)]">Run</h1>
-            <p className="text-xs text-[var(--muted)]">Single turn · New chat for another question</p>
+    <AppChatShell sidebar={sidebar} onOpenMobileNav={() => setMobileNavOpen(true)}>
+      <div className="flex min-h-0 flex-1 flex-col">
+        {phase === "chat" && experimentId ? (
+          <AppChatThread
+            experimentId={experimentId}
+            connectorRunId={connectorRunId}
+            onNewChat={handleNewChat}
+            onExperimentMeta={recordRecent}
+            presets={presets}
+            connectors={connectors}
+            onConnectorPresetRun={handleConnectorFromChat}
+            onUploadRun={handleUploadRun}
+            experimentBusy={busy}
+          />
+        ) : (
+          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+            <AppLandingComposer
+              embedded
+              error={error}
+              busy={busy}
+              onPresetSubmit={handlePresetSubmit}
+              presets={presets}
+              connectors={connectors}
+            />
           </div>
-          <div className="min-h-0 flex-1">
-            <AppChatThread experimentId={experimentId} connectorRunId={connectorRunId} onNewChat={handleNewChat} />
-          </div>
-        </>
-      ) : (
-        <AppLandingComposer
-          error={error}
-          busy={busy}
-          onPresetSubmit={handlePresetSubmit}
-          presets={presets}
-          connectors={connectors}
-        />
-      )}
-    </div>
+        )}
+      </div>
+    </AppChatShell>
   );
 }

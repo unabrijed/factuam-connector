@@ -47,6 +47,11 @@ Use this as the **repeatable checklist** when you bring the stack up. For generi
 - Per-worker AXL HTTP bridge: `scripts/dev-axl.mjs` (`yarn dev:axl`) — each worker uses the correct `GENSYN_AXL_API_URL` for its local node port.
 - Committed configs: `agents/local/<role>/node-config.json`
 
+**If `yarn local:axl` / `yarn local:axl:nodes` fails**
+
+- **HTTP bind errors (`address already in use` on `9002`, etc.):** Something else is using an AXL HTTP port. Stop leftover `axl/node` processes or other services; the stack script now checks ports up front and starts the **orchestrator first** so specialists only come up after the hub is listening.
+- **Node 25+ and topology polling:** The driver uses `node:http` for `/topology` (not `fetch`) to avoid a known `setTypeOfService EINVAL` issue with undici on some systems.
+
 ---
 
 ## Production checklist (high level)
