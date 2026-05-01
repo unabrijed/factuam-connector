@@ -17,6 +17,7 @@
     "baseUrl": ".",
     "paths": {
       "@factum/agent-sdk": ["packages/agent-sdk/src/index.ts"],
+      "@factum/agent-connectors": ["packages/agent-connectors/src/index.ts"],
       "@factum/connector-sdk": ["packages/connector-sdk/src/index.ts"],
       "@factum/kaggle-connector": ["packages/kaggle-connector/src/index.ts"],
       "@factum/gensyn-axl": ["packages/gensyn-axl/src/index.ts"],
