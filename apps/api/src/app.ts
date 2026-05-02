@@ -8,6 +8,7 @@ import { experimentsRouter } from "./routes/experiments.routes";
 import { proofsRouter } from "./routes/proofs.routes";
 import { internalRouter } from "./routes/internal.routes";
 import { connectorsRouter } from "./routes/connectors.routes";
+import { axlRouter } from "./routes/axl.routes";
 
 export function createApp() {
   const app = new Hono();
@@ -35,6 +36,7 @@ export function createApp() {
   app.get("/health", (c) => c.json({ ok: true }));
   app.route("/api/datasets", datasetsRouter);
   app.route("/api/connectors", connectorsRouter);
+  app.route("/api/axl", axlRouter);
   app.route("/api/experiments", experimentsRouter);
   app.route("/api/proofs", proofsRouter);
   app.route("/api/internal", internalRouter);

@@ -7,6 +7,7 @@ import type { ConnectorManifest, ConnectorPreset } from "../lib/api";
 import { getConnectorRun, getExperiment, sendExperimentMessage } from "../lib/api";
 import { appConfig } from "../lib/config";
 import { experimentPollIntervalMs, isExperimentTerminal } from "../lib/experiment-query";
+import { composeProgressLiveSubtitle } from "../lib/progress-details";
 import { AgentThinkingStrip } from "./agent-thinking-strip";
 import { ArtifactList } from "./artifact-list";
 import { ChatComposer } from "./chat-composer";
@@ -152,6 +153,8 @@ export function AppChatThread({
   const connectorFailed = connectorStage === "failed";
 
   const statusLine = !terminal ? currentMessage ?? undefined : undefined;
+  const latestProgressEntry = progress.length ? progress[progress.length - 1] : null;
+  const statusDetailLine = !terminal ? composeProgressLiveSubtitle(latestProgressEntry ?? null) : undefined;
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
@@ -173,6 +176,7 @@ export function AppChatThread({
           statusLabel={formatLabel(experiment.status)}
           receiptId={receiptId}
           statusLine={statusLine ?? null}
+          statusDetailLine={statusDetailLine ?? null}
           connectorLine={!terminal ? connectorStageMessage ?? null : null}
         />
 

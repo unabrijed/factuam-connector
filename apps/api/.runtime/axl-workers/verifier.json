@@ -1,12 +1,12 @@
 {
   "worker": "verifier",
   "status": "error",
-  "pid": 83515,
+  "pid": 83617,
   "apiBaseUrl": "",
   "pollIntervalMs": 0,
-  "startedAt": "2026-04-30T21:09:41.119Z",
-  "updatedAt": "2026-04-30T21:10:14.015Z",
+  "startedAt": "2026-05-02T20:15:02.868Z",
+  "updatedAt": "2026-05-02T20:15:11.698Z",
   "processedCount": 0,
-  "lastErrorAt": "2026-04-30T21:10:14.015Z",
+  "lastErrorAt": "2026-05-02T20:15:11.698Z",
   "lastErrorMessage": "fetch failed"
 }

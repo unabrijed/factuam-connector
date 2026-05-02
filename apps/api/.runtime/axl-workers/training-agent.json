@@ -1,12 +1,12 @@
 {
   "worker": "training-agent",
   "status": "error",
-  "pid": 83513,
+  "pid": 83615,
   "apiBaseUrl": "",
   "pollIntervalMs": 0,
-  "startedAt": "2026-04-30T21:08:57.131Z",
-  "updatedAt": "2026-04-30T21:10:13.976Z",
+  "startedAt": "2026-05-02T20:15:03.392Z",
+  "updatedAt": "2026-05-02T20:15:11.695Z",
   "processedCount": 0,
-  "lastErrorAt": "2026-04-30T21:10:13.976Z",
+  "lastErrorAt": "2026-05-02T20:15:11.695Z",
   "lastErrorMessage": "fetch failed"
 }

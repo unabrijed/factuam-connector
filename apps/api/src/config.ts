@@ -43,6 +43,13 @@ const envSchema = z.object({
     z.number().finite().min(0).max(2)
   ),
   GENSYN_AXL_ENABLED: z.coerce.boolean().default(false),
+  /** One Go node + unified worker; API waits on Redis instead of polling /recv (no FIFO races). */
+  GENSYN_AXL_SINGLE_NODE: z.coerce.boolean().default(false),
+  /** When set, all agents send to this 64-hex peer id (from GET /topology on the single node). */
+  AXL_SINGLE_PEER_ID: z
+    .string()
+    .regex(/^[0-9a-fA-F]{64}$/)
+    .optional(),
   GENSYN_AXL_API_URL: z.string().default("http://127.0.0.1:9002"),
   GENSYN_AXL_AGENT_PEERS: z.string().optional(),
   AXL_PEER_CLASSIFIER: z.string().optional(),
@@ -104,6 +111,8 @@ export const config = envSchema.parse({
   GENSYN_REE_MAX_NEW_TOKENS: process.env.GENSYN_REE_MAX_NEW_TOKENS ?? process.env.REE_MAX_NEW_TOKENS,
   GENSYN_REE_TEMPERATURE: process.env.GENSYN_REE_TEMPERATURE ?? process.env.REE_TEMPERATURE,
   GENSYN_AXL_ENABLED: process.env.GENSYN_AXL_ENABLED,
+  GENSYN_AXL_SINGLE_NODE: process.env.GENSYN_AXL_SINGLE_NODE,
+  AXL_SINGLE_PEER_ID: process.env.AXL_SINGLE_PEER_ID?.trim() || undefined,
   GENSYN_AXL_API_URL: process.env.GENSYN_AXL_API_URL ?? process.env.AXL_API_URL,
   GENSYN_AXL_AGENT_PEERS: process.env.GENSYN_AXL_AGENT_PEERS,
   AXL_PEER_CLASSIFIER: process.env.AXL_PEER_CLASSIFIER,

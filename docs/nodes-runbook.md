@@ -18,6 +18,23 @@ Use this as the **repeatable checklist** when you bring the stack up. For generi
 
 ---
 
+## Moving from “local fast” to strict Gensyn + AXL
+
+Use this when you have finished testing with **in-process** specialists and want the **same routing shape as demos / production**.
+
+| Step | Action |
+|------|--------|
+| 1 | In `.env` / `apps/api/.env`, set **`FACTUM_MODE=gensyn`**, **`GENSYN_AXL_ENABLED=true`**. Set **`GENSYN_AXL_LOCAL_FALLBACK=false`** if silent fallback to local handlers is unacceptable. |
+| 2 | Remove or override any **`FACTUM_MODE=dev`** and **`GENSYN_AXL_ENABLED=false`** left from local testing (remember **`apps/api/.env` overrides** root `.env`). |
+| 3 | Run **`yarn local:axl`** (multi-node) or **`yarn local:axl:single`** (hackathon single-node). Then **restart the API** so `.env.local.axl` peer ids and flags load. |
+| 4 | Confirm **`curl "$GENSYN_AXL_API_URL/topology"`** returns **`our_public_key`** and that **`AXL_PEER_*`** (or **`AXL_SINGLE_PEER_ID`** in single-node mode) match. |
+| 5 | Keep **Redis** up for **`GENSYN_AXL_SINGLE_NODE`** reply correlation; optional: **`yarn check:axl`** after workers are running. |
+| 6 | Increase **`GENSYN_AXL_TIMEOUT_MS`** / **`REPLY_TIMEOUT_MS`** if you see **`FAILED_AXL_TRANSPORT`** or timeouts under load. |
+
+Proof receipts are still built **inside the API** (storage + optional chain); they are not produced by the Go `node`. Failures there stay **`FAILED_RECEIPT_GENERATION`**; transport issues map to **`FAILED_AXL_TRANSPORT`**.
+
+---
+
 ## Each time you run — local checklist
 
 1. **Infra**
@@ -54,6 +71,21 @@ Use this as the **repeatable checklist** when you bring the stack up. For generi
 
 - **HTTP bind errors (`address already in use` on `9002`, etc.):** Something else is using an AXL HTTP port. Stop leftover `axl/node` processes or other services; the stack script checks ports up front and starts the **orchestrator first**, then specialists (see `scripts/local-axl-stack.mjs`).
 - **Node 25+ and topology polling:** The driver uses `node:http` for `/topology` (not `fetch`) to avoid a known `setTypeOfService EINVAL` issue with undici on some systems.
+
+---
+
+## Single-node AXL (hackathon)
+
+Use this when you want **one Go `axl/node`** on HTTP **:9002**, a **single mesh peer id**, and **one unified TS worker** (no per-specialist Go nodes on 9012–9092). See **[Hackathon: single logical AXL node (concept vs code)](./hackathon-axl-single-node.md)** for why the **diagram** still differs slightly from **running processes** (API + Go node + unified worker + Redis).
+
+**Commands**
+
+- `yarn local:axl:single` — starts the orchestrator-only Go node, writes `.env.local.axl` with `GENSYN_AXL_SINGLE_NODE=true`, `AXL_SINGLE_PEER_ID`, `GENSYN_AXL_API_URL`, and spawns the unified worker (`scripts/local-axl-single.mjs`).
+- `yarn local:axl:single:nodes` — nodes + env file only; run `yarn workspace @factum/api dev:axl-unified` yourself after restarting the API.
+
+**After `.env.local.axl` changes:** restart **`yarn api` / `yarn dev`** so the API loads the new peer id and flags.
+
+**Topology in the UI:** `GET /api/axl/topology` (proxied from `GENSYN_AXL_API_URL`) when exposed by the API — useful for displaying **`our_public_key`** during demos.
 
 ---
 
@@ -113,5 +145,6 @@ flowchart TD
 
 - [README.md](../README.md) — full stack, env groups, troubleshooting
 - [LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md) — short local path
+- [hackathon-axl-single-node.md](./hackathon-axl-single-node.md) — hackathon narrative: logical single node vs Factum processes
 - [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md) — env reference
 - [axl/AGENTS.md](../axl/AGENTS.md) — node HTTP API and peer identity

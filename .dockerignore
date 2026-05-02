@@ -1,0 +1,12 @@
+node_modules
+.git
+.turbo
+**/.next
+**/dist
+**/.tsbuildinfo
+apps/api/connector-data
+**/uploads
+**/artifacts
+**/.env
+**/.env.*
+!**/.env.example

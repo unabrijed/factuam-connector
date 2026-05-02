@@ -123,7 +123,29 @@ Users can now message an experiment to:
 
 ## Local development setup
 
-For a **repeatable run order** (infra, local AXL mesh vs fast dev, production checks) and how **`FACTUM_MODE` relates to Gensyn/AXL**, see [docs/nodes-runbook.md](./docs/nodes-runbook.md).
+For a **repeatable run order** (infra, local AXL mesh vs fast dev, production checks) and how **`FACTUM_MODE` relates to Gensyn/AXL**, see [docs/nodes-runbook.md](./docs/nodes-runbook.md). The short path without Gensyn is [docs/LOCAL_DEVELOPMENT.md](./docs/LOCAL_DEVELOPMENT.md).
+
+### How we run the stack (pick one profile)
+
+| Goal | What you start | Notes |
+|------|----------------|-------|
+| **Default app development** | `docker compose up -d postgres redis` → `yarn db:migrate` → `yarn dev` | `yarn dev` runs **web + API + ML worker** in parallel (Turbo). No Go AXL unless you add it. |
+| **Fast / no AXL transport** | Same infra + set `FACTUM_MODE=dev`, `GENSYN_AXL_ENABLED=false`, `GENSYN_AXL_LOCAL_FALLBACK=true` | Specialists run **in-process** in the API; good when you are not testing the mesh. |
+| **Full local Gensyn mesh** | Infra + app + `yarn local:axl` **or** `yarn local:axl:nodes` + `yarn dev:axl` | Writes `.env.local.axl`; **restart `yarn api` / `yarn dev`** after it changes. See [nodes-runbook](./docs/nodes-runbook.md). |
+| **Hackathon single-node AXL** | Infra + app + `yarn local:axl:single` (or `yarn local:axl:single:nodes` + `yarn workspace @factum/api dev:axl-unified`) | One Go node + unified TS worker + Redis reply path. Narrative: [hackathon-axl-single-node.md](./docs/hackathon-axl-single-node.md). |
+
+**Env reference:** [docs/ENVIRONMENT_VARIABLES.md](./docs/ENVIRONMENT_VARIABLES.md).
+
+### After local testing: run “real” Gensyn AXL
+
+When you are done with **in-process** agents (`FACTUM_MODE=dev`, `GENSYN_AXL_ENABLED=false`), switch to the mesh-backed profile:
+
+1. Set **`FACTUM_MODE=gensyn`**, **`GENSYN_AXL_ENABLED=true`**, and **`GENSYN_AXL_LOCAL_FALLBACK=false`** when you must not fall back to local handlers.
+2. Start the **Go bridge + TS workers** using either **`yarn local:axl`** (full local mesh) or **`yarn local:axl:single`** (one Go node + unified worker + Redis). Restart **`yarn api` / `yarn dev`** after `.env.local.axl` is written.
+3. Point **`GENSYN_AXL_API_URL`** at the orchestrator node (local default `http://127.0.0.1:9002`). Ensure **`AXL_PEER_*`** or **`AXL_SINGLE_PEER_ID`** match **`our_public_key`** from `/topology` as documented in [docs/nodes-runbook.md](./docs/nodes-runbook.md).
+4. For flaky links or slow hosts, raise **`GENSYN_AXL_TIMEOUT_MS`** and **`REPLY_TIMEOUT_MS`** (single-node).
+
+See the **Production / shared demo** row and checklist in [docs/nodes-runbook.md](./docs/nodes-runbook.md) when peers are not all on one machine.
 
 ## 1. Prerequisites
 
@@ -186,22 +208,16 @@ This starts:
 
 ### Gensyn worker swarm in a separate terminal
 
-To run all AXL workers together:
+To run **one recv loop per specialist** (full local mesh), use:
 
 ```bash
 yarn dev:axl
 ```
 
-This starts:
-- classifier worker
-- planner worker
-- validation worker
-- diagnosis worker
-- strategy worker
-- training worker
-- reflection worker
-- verifier worker
-- answer worker
+Or use the **automation** that starts Go `axl/node` processes and workers: `yarn local:axl` / `yarn local:axl:nodes` (see [docs/nodes-runbook.md](./docs/nodes-runbook.md)). For **one Go node + one unified TS worker**, use `yarn local:axl:single` instead.
+
+`yarn dev:axl` starts these worker processes:
+- classifier, planner, validation, diagnosis, strategy, training, reflection, verifier, answer
 
 For a full Gensyn-first local run, you usually want:
 
@@ -249,13 +265,14 @@ Open:
 http://localhost:3000
 ```
 
-### Typechecks
+### Typechecks and full gate
 
 ```bash
-yarn typecheck
+yarn typecheck                      # all workspaces
 yarn workspace @factum/api typecheck
 yarn workspace @factum/agent-sdk typecheck
 yarn workspace @factum/shared-types build
+yarn check                          # typecheck + test
 ```
 
 ---
@@ -423,8 +440,22 @@ yarn typecheck
 ### Run tests
 
 ```bash
-yarn test
+yarn test    # Turbo: every workspace that defines a test script
+yarn check   # typecheck + test (handy pre-push gate)
 ```
+
+**Targeted:**
+
+```bash
+yarn workspace @factum/api test                                      # all Vitest suites under apps/api
+yarn workspace @factum/api test test/connectors-contract.test.ts    # connector HTTP contract only
+yarn workspace @factum/ml-runner test                                # Python tests for ML worker
+yarn workspace @factum/proof-receipts test                           # Vitest (proof receipts package)
+```
+
+**Connectors:** smoke script and manifest/run contract are documented in [connectors/README.md](./connectors/README.md).
+
+**AXL:** with the API running, `yarn check:axl` probes worker health via the API.
 
 ### Clean build artifacts
 

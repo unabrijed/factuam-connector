@@ -1,6 +1,6 @@
 # Local Development
 
-This is the shortest path to a working local setup.
+This is the shortest path to a working local app **without** standing up the full Gensyn AXL mesh. For AXL (full mesh, single-node hackathon, env order), use [nodes-runbook.md](./nodes-runbook.md). The root [README.md](../README.md) has the full command list and env groups.
 
 ## Prerequisites
 
@@ -25,6 +25,12 @@ From the repo root:
 yarn install
 ```
 
+## 1b. Database migrations (first run and after schema changes)
+
+```bash
+yarn db:migrate
+```
+
 ## 2. Start local infrastructure
 
 ```bash
@@ -42,40 +48,51 @@ Important:
 - the API validates required variables at startup
 - a full experiment run needs working OpenAI and 0G values
 
-## 4. Start the ML worker
+## 4. Start the application
+
+**Recommended — one terminal:**
 
 ```bash
-yarn worker
+yarn dev
 ```
 
-This creates `workers/ml-runner/.venv` on first run if needed.
+Turbo runs **web**, **API**, and **ML worker** together. The ML runner creates `workers/ml-runner/.venv` on first run if needed.
 
-## 5. Start the API
+**Or split across terminals** (same ports as above):
 
 ```bash
-yarn api
+yarn worker   # ML runner :8000
+yarn api      # API :4000
+yarn web      # Next.js :3000
 ```
 
-## 6. Start the web app
-
-```bash
-yarn web
-```
-
-## 7. Verify the stack
-
-Check:
+## 5. Verify the stack
 
 ```bash
 curl http://localhost:4000/health
 curl http://localhost:8000/health
 ```
 
-Then open:
+Open `http://localhost:3000`.
 
-```txt
-http://localhost:3000
+## Testing
+
+From the repo root:
+
+```bash
+yarn test    # all workspaces that define tests (Turbo)
+yarn check   # typecheck + test
 ```
+
+**Often-used targets:**
+
+```bash
+yarn workspace @factum/api test
+yarn workspace @factum/api test test/connectors-contract.test.ts
+yarn workspace @factum/ml-runner test
+```
+
+Connector HTTP smoke (needs API up): [connectors/README.md](../connectors/README.md#quick-smoke-test).
 
 ## Supported local workflow
 

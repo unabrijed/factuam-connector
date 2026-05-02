@@ -4,6 +4,7 @@ import type { AgentTraceEntry } from "@factum/shared-types";
 import type { AxlMessageEnvelope } from "@factum/gensyn-axl";
 import { AxlTransportClient } from "@factum/gensyn-axl";
 import { config } from "../config";
+import { axlReplyBroker } from "./axl-reply-broker.service";
 
 type AxlResponseEnvelope<TResult> = {
   correlationId?: string;
@@ -59,6 +60,8 @@ export class AxlAgentRouterService {
   private readonly inboundBuffer: BufferedInbound<unknown>[] = [];
 
   getPeerId(agent: string) {
+    const single = config.AXL_SINGLE_PEER_ID?.trim();
+    if (single) return single;
     return explicitPeers[agent] ?? this.peers[agent];
   }
 
@@ -117,6 +120,25 @@ export class AxlAgentRouterService {
         }
       });
 
+      if (config.GENSYN_AXL_SINGLE_NODE) {
+        const reply = await axlReplyBroker.waitForReply(correlationId, config.REPLY_TIMEOUT_MS);
+        if (reply !== undefined) {
+          return {
+            result: reply as TResult,
+            trace: {
+              step: 0,
+              agent: input.agent,
+              axlPeerId: resolvedPeerId,
+              transport: "axl",
+              input: summarizeValue(input.payload),
+              output: summarizeValue(reply)
+            }
+          };
+        }
+        if (!config.GENSYN_AXL_LOCAL_FALLBACK) {
+          throw new Error(`AXL timed out waiting for ${input.agent} (single-node Redis)`);
+        }
+      } else {
       const deadline = Date.now() + config.GENSYN_AXL_TIMEOUT_MS;
       while (Date.now() < deadline) {
         const fromBuffer = this.takeMatchingResponse<TResult>(correlationId);
@@ -161,6 +183,7 @@ export class AxlAgentRouterService {
 
       if (!config.GENSYN_AXL_LOCAL_FALLBACK) {
         throw new Error(`AXL timed out waiting for ${input.agent}`);
+      }
       }
     } catch (error) {
       if (!config.GENSYN_AXL_LOCAL_FALLBACK || mode === "gensyn") {

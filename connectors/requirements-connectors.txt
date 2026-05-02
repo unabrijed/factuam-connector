@@ -1,0 +1,3 @@
+# Python deps used by the API container for Kaggle downloads (kaggle-connector).
+# Keep in sync with apps/api Dockerfile pip install.
+kagglehub>=0.3.0

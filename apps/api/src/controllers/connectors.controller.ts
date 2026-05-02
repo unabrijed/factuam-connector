@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { ConnectorRequestSchema, CreateExperimentInputSchema } from "@factum/shared-types";
+import { buildAgentConnectorManifest } from "@factum/agent-connectors";
+import { ConnectorRequestSchema, CreateExperimentInputSchema, type ConnectorRequest } from "@factum/shared-types";
 import { ConnectorAcquisitionService } from "../services/connector-acquisition.service";
 import { ExperimentService } from "../services/experiment.service";
 import { enqueueExperiment } from "../jobs/queue";
@@ -16,8 +17,32 @@ const ConnectorImportInputSchema = z.object({
   connectorRequest: ConnectorRequestSchema
 });
 
+const RunConnectorBodySchema = z
+  .object({ datasetName: z.string().min(1).optional() })
+  .and(ConnectorRequestSchema);
+
 export function listConnectorsController() {
   return connectors.listConnectors();
+}
+
+export function listAgentConnectorManifestController() {
+  return buildAgentConnectorManifest();
+}
+
+export async function runConnectorController(input: unknown) {
+  const parsed = RunConnectorBodySchema.parse(input);
+  const { datasetName, ...rest } = parsed;
+  const request = rest as ConnectorRequest;
+  const name = datasetName ?? getDatasetNameFromConnectorRequest(request);
+  const acquisition = await connectors.acquireDataset({
+    request,
+    datasetName: name
+  });
+  return {
+    connectorRunId: acquisition.runId,
+    datasetId: acquisition.datasetId,
+    status: "imported" as const
+  };
 }
 
 export function listKagglePresetsController() {

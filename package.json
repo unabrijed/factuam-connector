@@ -23,6 +23,8 @@
     "local:axl:keys": "node scripts/ensure-axl-local-keys.mjs",
     "local:axl": "node scripts/local-axl-stack.mjs",
     "local:axl:nodes": "node scripts/local-axl-stack.mjs --nodes-only",
+    "local:axl:single": "node scripts/local-axl-single.mjs",
+    "local:axl:single:nodes": "node scripts/local-axl-single.mjs --nodes-only",
     "check:axl": "node scripts/check-axl-health.mjs",
     "build": "turbo run build",
     "build:web": "yarn workspace @factum/web build",

@@ -22,6 +22,8 @@ type ChatTranscriptProps = {
   receiptId?: string;
   /** Shown under the last bubble while run is active */
   statusLine?: string | null;
+  /** Structured hint (e.g. agent + verifier outcome) when available */
+  statusDetailLine?: string | null;
   connectorLine?: string | null;
 };
 
@@ -58,6 +60,7 @@ export function ChatTranscript({
   statusLabel,
   receiptId,
   statusLine,
+  statusDetailLine,
   connectorLine
 }: ChatTranscriptProps) {
   return (
@@ -76,9 +79,10 @@ export function ChatTranscript({
         </Bubble>
       ))}
 
-      {!terminal && (statusLine || connectorLine) ? (
+      {!terminal && (statusLine || statusDetailLine || connectorLine) ? (
         <div className="pl-1 text-xs text-[var(--muted)]">
           {statusLine ? <p className="text-[var(--text-soft)]">{statusLine}</p> : null}
+          {statusDetailLine ? <p className="text-[11px] text-[var(--muted)]">{statusDetailLine}</p> : null}
           {connectorLine ? <p>{connectorLine}</p> : null}
         </div>
       ) : null}

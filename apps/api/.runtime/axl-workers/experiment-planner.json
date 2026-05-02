@@ -1,12 +1,12 @@
 {
   "worker": "experiment-planner",
   "status": "error",
-  "pid": 83403,
+  "pid": 83613,
   "apiBaseUrl": "",
   "pollIntervalMs": 0,
-  "startedAt": "2026-04-30T21:09:09.506Z",
-  "updatedAt": "2026-04-30T21:10:13.977Z",
+  "startedAt": "2026-05-02T20:15:02.868Z",
+  "updatedAt": "2026-05-02T20:15:11.679Z",
   "processedCount": 0,
-  "lastErrorAt": "2026-04-30T21:10:13.977Z",
+  "lastErrorAt": "2026-05-02T20:15:11.679Z",
   "lastErrorMessage": "fetch failed"
 }

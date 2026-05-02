@@ -17,6 +17,8 @@ export const experimentStatuses = [
   "FAILED_TRAINING",
   "FAILED_BACKTESTING",
   "FAILED_VERIFICATION",
+  /** Gensyn AXL bridge timeout, missing peer, /send /recv, or Redis reply path */
+  "FAILED_AXL_TRANSPORT",
   "FAILED_RECEIPT_GENERATION",
   "REJECTED_NO_EVIDENCE_NEEDED",
   "REJECTED_INSUFFICIENT_DATA",

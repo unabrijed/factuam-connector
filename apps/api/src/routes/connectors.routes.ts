@@ -2,16 +2,25 @@ import { Hono } from "hono";
 import {
   getConnectorRunController,
   importKaggleDatasetController,
+  listAgentConnectorManifestController,
   listConnectorPresetsController,
   listKagglePresetsController,
-  listConnectorsController
+  listConnectorsController,
+  runConnectorController
 } from "../controllers/connectors.controller";
 
 export const connectorsRouter = new Hono();
 
 connectorsRouter.get("/", (c) => c.json(listConnectorsController()));
+connectorsRouter.get("/manifest", (c) => c.json(listAgentConnectorManifestController()));
 connectorsRouter.get("/presets", (c) => c.json(listConnectorPresetsController()));
 connectorsRouter.get("/kaggle/presets", (c) => c.json(listKagglePresetsController()));
+
+connectorsRouter.post("/run", async (c) => {
+  const json = await c.req.json();
+  const result = await runConnectorController(json);
+  return c.json(result, 201);
+});
 
 connectorsRouter.post("/kaggle/import", async (c) => {
   const json = await c.req.json();

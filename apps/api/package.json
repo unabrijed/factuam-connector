@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "dev:axl-classifier": "tsx watch src/axl-workers/evidence-classifier.worker.ts",
     "dev:axl-planner": "tsx watch src/axl-workers/experiment-planner.worker.ts",
@@ -14,6 +15,7 @@
     "dev:axl-reflection": "tsx watch src/axl-workers/reflection.worker.ts",
     "dev:axl-answer": "tsx watch src/axl-workers/answer-generator.worker.ts",
     "dev:axl-verifier": "tsx watch src/axl-workers/verifier.worker.ts",
+    "dev:axl-unified": "tsx watch src/axl-workers/unified-axl.worker.ts",
     "dev:axl": "node ../../scripts/dev-axl.mjs",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -22,6 +24,7 @@
     "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
+    "@factum/agent-connectors": "*",
     "@factum/agent-sdk": "*",
     "@factum/connector-sdk": "*",
     "@factum/kaggle-connector": "*",

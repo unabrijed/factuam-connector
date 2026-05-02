@@ -23,6 +23,7 @@ import { OgChainService } from "./og-chain.service";
 import { GensynChainService } from "./gensyn-chain.service";
 import { ArtifactService } from "./artifact.service";
 import { DatasetService } from "./dataset.service";
+import { log } from "../lib/logger";
 
 export class ProofService {
   constructor(
@@ -117,12 +118,20 @@ export class ProofService {
       uri: manifestUpload.uri
     });
 
-    const computeProofResult = await this.computeService.verifyNarrative({
-      verification: input.verification,
-      finalAnswer: input.finalAnswer,
-      bestModel: input.mlResult.bestModel,
-      backtest: input.mlResult.backtest
-    });
+    let computeProofResult: Awaited<ReturnType<OgComputeService["verifyNarrative"]>> = null;
+    try {
+      computeProofResult = await this.computeService.verifyNarrative({
+        verification: input.verification,
+        finalAnswer: input.finalAnswer,
+        bestModel: input.mlResult.bestModel,
+        backtest: input.mlResult.backtest
+      });
+    } catch (error) {
+      log("warn", "og_compute_narrative_skipped", {
+        experimentId: input.experimentId,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
 
     const bestModelArtifactHash = input.mlResult.models.find((model) => model.modelId === input.mlResult.bestModel.modelId)?.artifactHash ?? "";
     const metricsHash = sha256Json({

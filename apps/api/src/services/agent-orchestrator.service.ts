@@ -48,6 +48,46 @@ function terminalStatusFromVerification(verification: VerifierResult) {
   return "REJECTED_MODEL_UNDERPERFORMED" as const;
 }
 
+/** Maps thrown errors to terminal statuses; receipt vs AXL vs stage keywords (order matters). */
+function inferFailureStatusFromMessage(message: string): ExperimentStatus {
+  const m = message.toLowerCase();
+
+  const receiptLikely =
+    m.includes("proof_receipt") ||
+    m.includes("proof receipt") ||
+    m.includes("registerreceipt") ||
+    m.includes("artifact_manifest") ||
+    m.includes("artifact manifest") ||
+    m.includes("verification_report") ||
+    m.includes("waitfortransactionreceipt") ||
+    m.includes("transactionexecutionerror") ||
+    m.includes("writecontract") ||
+    (m.includes("upload") && (m.includes("storage") || m.includes("failed") || m.includes("error"))) ||
+    (m.includes("chain") && (m.includes("anchor") || m.includes("registry") || m.includes("gensyn_chain")));
+
+  if (receiptLikely) return "FAILED_RECEIPT_GENERATION";
+
+  const axlLikely =
+    m.includes("axl timed") ||
+    m.includes("axl peer") ||
+    (m.includes("axl") && m.includes("waiting")) ||
+    m.includes("/recv") ||
+    m.includes("/send") ||
+    m.includes("factum:axl:reply") ||
+    m.includes("reply broker");
+
+  if (axlLikely) return "FAILED_AXL_TRANSPORT";
+
+  if (m.includes("classification")) return "FAILED_CLASSIFICATION";
+  if (m.includes("planning")) return "FAILED_PLANNING";
+  if (m.includes("validation")) return "FAILED_DATA_VALIDATION";
+  if (m.includes("training")) return "FAILED_TRAINING";
+  if (m.includes("backtest")) return "FAILED_BACKTESTING";
+  if (m.includes("verification")) return "FAILED_VERIFICATION";
+
+  return "FAILED_RECEIPT_GENERATION";
+}
+
 function summarizeAgentOutput(agent: string, output: unknown) {
   if (!output || typeof output !== "object") return {};
   const source = output as Record<string, unknown>;
@@ -223,7 +263,7 @@ export class AgentOrchestratorService {
       await this.experiments.updateStatus(experimentId, "CLASSIFYING");
       await this.experiments.appendProgress(experimentId, {
         stage: "classifying",
-        message: "Classifying request to determine evidence workflow"
+        message: "Waiting on the evidence classifier to decide workflow, risk, and whether proof-style evidence is required"
       });
       const classificationPayload = {
         query: experiment.query,
@@ -469,7 +509,7 @@ export class AgentOrchestratorService {
         });
         await this.experiments.appendProgress(experimentId, {
           stage: "attempt_started",
-          message: `Attempt ${attemptNumber} started: ${strategyDecision.strategyKey}`,
+          message: `Attempt ${attemptNumber} (${strategyDecision.strategyKey}): waiting on the ML training worker to fit and evaluate models; this step may take a while`,
           details: {
             attemptNumber,
             strategy: strategyDecision.strategyKey,
@@ -676,7 +716,7 @@ export class AgentOrchestratorService {
       await this.experiments.updateStatus(experimentId, "VERIFYING");
       await this.experiments.appendProgress(experimentId, {
         stage: "verifying",
-        message: "Verifying model outputs and claims"
+        message: "Waiting on the ML verifier to check model outputs, metrics, and claims against the plan"
       });
       const verifierPayload = {
         query: experiment.query,
@@ -829,17 +869,7 @@ export class AgentOrchestratorService {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown orchestration error";
-      const status: ExperimentStatus = message.includes("classification")
-        ? "FAILED_CLASSIFICATION"
-        : message.includes("planning")
-          ? "FAILED_PLANNING"
-          : message.includes("validation")
-            ? "FAILED_DATA_VALIDATION"
-            : message.includes("training")
-              ? "FAILED_TRAINING"
-              : message.includes("verification")
-                ? "FAILED_VERIFICATION"
-                : "FAILED_RECEIPT_GENERATION";
+      const status = inferFailureStatusFromMessage(message);
       if (dataset.connectorRunId) {
         await this.connectorRuns.setStage(dataset.connectorRunId, {
           status: "failed",

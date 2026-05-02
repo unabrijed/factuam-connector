@@ -1,13 +1,19 @@
-FROM node:20-alpine AS base
+# Build from repository root: docker build -f apps/api/Dockerfile .
+# Kaggle connector invokes Python (kagglehub) from the API; install both runtimes.
+# Mount a persistent volume on LOCAL_CONNECTOR_DIR (e.g. /var/lib/factum/connector-data) in production.
+
+FROM node:20-alpine
+
+RUN apk add --no-cache python3 py3-pip
+
 WORKDIR /app
-COPY package.json turbo.json tsconfig.base.json ./
-COPY apps/api/package.json apps/api/package.json
-COPY packages/shared-types/package.json packages/shared-types/package.json
-COPY packages/proof-receipts/package.json packages/proof-receipts/package.json
-COPY packages/og-storage/package.json packages/og-storage/package.json
-COPY packages/og-compute/package.json packages/og-compute/package.json
-COPY packages/og-chain/package.json packages/og-chain/package.json
-COPY packages/openclaw-adapter/package.json packages/openclaw-adapter/package.json
-RUN yarn install
+
 COPY . .
-CMD ["yarn", "workspace", "@prooflayer/api", "dev"]
+RUN yarn install --frozen-lockfile
+RUN python3 -m pip install --no-cache-dir -r connectors/requirements-connectors.txt --break-system-packages
+
+RUN yarn workspace @factum/api build
+
+ENV NODE_ENV=production
+EXPOSE 4000
+CMD ["yarn", "workspace", "@factum/api", "start"]

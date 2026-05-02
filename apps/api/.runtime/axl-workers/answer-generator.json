@@ -1,12 +1,12 @@
 {
   "worker": "answer-generator",
   "status": "error",
-  "pid": 83494,
+  "pid": 83614,
   "apiBaseUrl": "",
   "pollIntervalMs": 0,
-  "startedAt": "2026-04-30T21:09:46.272Z",
-  "updatedAt": "2026-04-30T21:10:13.870Z",
+  "startedAt": "2026-05-02T20:14:36.974Z",
+  "updatedAt": "2026-05-02T20:15:11.698Z",
   "processedCount": 0,
-  "lastErrorAt": "2026-04-30T21:10:13.870Z",
+  "lastErrorAt": "2026-05-02T20:15:11.698Z",
   "lastErrorMessage": "fetch failed"
 }

@@ -11,7 +11,8 @@ export type AxlWorkerName =
   | "training-agent"
   | "reflection-agent"
   | "answer-generator"
-  | "verifier";
+  | "verifier"
+  | "unified-axl";
 
 export type AxlWorkerHealthRecord = {
   worker: AxlWorkerName;

@@ -1,0 +1,12 @@
+{
+  "worker": "unified-axl",
+  "status": "idle",
+  "pid": 88468,
+  "apiBaseUrl": "http://127.0.0.1:9002",
+  "pollIntervalMs": 250,
+  "startedAt": "2026-05-02T12:13:54.307Z",
+  "updatedAt": "2026-05-02T12:24:15.836Z",
+  "processedCount": 0,
+  "lastErrorAt": "2026-05-02T12:15:17.998Z",
+  "lastErrorMessage": "401 Incorrect API key provided: sk-proj-********************************************************************************************************************************************************TPoA. You can find your API key at https://platform.openai.com/account/api-keys."
+}
