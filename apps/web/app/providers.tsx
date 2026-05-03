@@ -10,7 +10,7 @@ const ThemeContext = createContext<{ theme: Theme; toggleTheme: () => void }>({
   toggleTheme: () => undefined
 });
 
-const THEME_STORAGE_KEY = "factum-theme";
+const THEME_STORAGE_KEY = "factuam-theme";
 const LEGACY_THEME_STORAGE_KEY = "prooflayer-theme";
 
 function getPreferredTheme(): Theme {

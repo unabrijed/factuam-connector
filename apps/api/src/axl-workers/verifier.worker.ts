@@ -1,4 +1,4 @@
-import { AxlTransportClient } from "@factum/gensyn-axl";
+import { AxlTransportClient } from "@factuam/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
@@ -44,7 +44,7 @@ async function main() {
     logTag: "axl_verifier_worker",
     handleMessages: async (messages) => {
       for (const message of messages) {
-        if (message.topic !== "factum.verifier") continue;
+        if (message.topic !== "factuam.verifier") continue;
         const data = message.data as VerifierRequestEnvelope;
         await markAxlWorkerProcessing("verifier");
         if (!message.from) continue;
@@ -54,7 +54,7 @@ async function main() {
 
         await client.send({
           to: message.from,
-          topic: "factum.verifier.result",
+          topic: "factuam.verifier.result",
           payload: {
             correlationId: data.correlationId,
             result

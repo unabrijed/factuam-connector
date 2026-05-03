@@ -16,14 +16,14 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@factum/agent-sdk": ["packages/agent-sdk/src/index.ts"],
-      "@factum/agent-connectors": ["packages/agent-connectors/src/index.ts"],
-      "@factum/connector-sdk": ["packages/connector-sdk/src/index.ts"],
-      "@factum/kaggle-connector": ["packages/kaggle-connector/src/index.ts"],
-      "@factum/gensyn-axl": ["packages/gensyn-axl/src/index.ts"],
-      "@factum/gensyn-chain": ["packages/gensyn-chain/src/index.ts"],
-      "@factum/gensyn-ree": ["packages/gensyn-ree/src/index.ts"],
-      "@factum/shared-types": ["packages/shared-types/src/index.ts"]
+      "@factuam/agent-sdk": ["packages/agent-sdk/src/index.ts"],
+      "@factuam/agent-connectors": ["packages/agent-connectors/src/index.ts"],
+      "@factuam/connector-sdk": ["packages/connector-sdk/src/index.ts"],
+      "@factuam/kaggle-connector": ["packages/kaggle-connector/src/index.ts"],
+      "@factuam/gensyn-axl": ["packages/gensyn-axl/src/index.ts"],
+      "@factuam/gensyn-chain": ["packages/gensyn-chain/src/index.ts"],
+      "@factuam/gensyn-ree": ["packages/gensyn-ree/src/index.ts"],
+      "@factuam/shared-types": ["packages/shared-types/src/index.ts"]
     }
   }
 }

@@ -10,7 +10,7 @@ export function HeroSection() {
           Get a tested answer.
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-7 text-[var(--text-soft)] sm:text-lg">
-          Factum plans evidence, runs experiments, and returns verified proof receipts — not generic chat replies.
+          factuam plans evidence, runs experiments, and returns verified proof receipts — not generic chat replies.
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link

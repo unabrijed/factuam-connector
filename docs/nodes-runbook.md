@@ -8,11 +8,11 @@ Use this as the **repeatable checklist** when you bring the stack up. For generi
 
 | Profile | When to use | Typical env |
 |--------|-------------|-------------|
-| **Local — fastest** | UI and experiments without a Go AXL mesh or peer keys | `FACTUM_MODE=dev`, `GENSYN_AXL_ENABLED=false`, `GENSYN_AXL_LOCAL_FALLBACK=true` |
-| **Local — full Gensyn mesh** | Same routing shape as demo/hackathon, all processes on your machine | `FACTUM_MODE=gensyn`, `GENSYN_AXL_ENABLED=true`, peers from automation (below) |
-| **Production / shared demo** | Real hosts, bootstrap peers, no accidental fallback | `FACTUM_MODE=gensyn`, `GENSYN_AXL_ENABLED=true`, real `Peers` in node config, `AXL_PEER_*` from each node’s `/topology`, `GENSYN_AXL_LOCAL_FALLBACK=false` when you want strict AXL |
+| **Local — fastest** | UI and experiments without a Go AXL mesh or peer keys | `factuam_MODE=dev`, `GENSYN_AXL_ENABLED=false`, `GENSYN_AXL_LOCAL_FALLBACK=true` |
+| **Local — full Gensyn mesh** | Same routing shape as demo/hackathon, all processes on your machine | `factuam_MODE=gensyn`, `GENSYN_AXL_ENABLED=true`, peers from automation (below) |
+| **Production / shared demo** | Real hosts, bootstrap peers, no accidental fallback | `factuam_MODE=gensyn`, `GENSYN_AXL_ENABLED=true`, real `Peers` in node config, `AXL_PEER_*` from each node’s `/topology`, `GENSYN_AXL_LOCAL_FALLBACK=false` when you want strict AXL |
 
-**Default `FACTUM_MODE`:** If you omit it, the API defaults to **`gensyn`** (`apps/api/src/config.ts`). For **Local — fastest**, set `FACTUM_MODE=dev` explicitly so missing peers do not fail the process.
+**Default `factuam_MODE`:** If you omit it, the API defaults to **`gensyn`** (`apps/api/src/config.ts`). For **Local — fastest**, set `factuam_MODE=dev` explicitly so missing peers do not fail the process.
 
 **Env file loading (API):** root `.env` → `apps/api/.env` (overrides) → **`.env.local.axl`** at repo root (overrides when present). The local mesh script writes `.env.local.axl`; restart the API after it changes. See `dotenv` order in `apps/api/src/config.ts`.
 
@@ -24,8 +24,8 @@ Use this when you have finished testing with **in-process** specialists and want
 
 | Step | Action |
 |------|--------|
-| 1 | In `.env` / `apps/api/.env`, set **`FACTUM_MODE=gensyn`**, **`GENSYN_AXL_ENABLED=true`**. Set **`GENSYN_AXL_LOCAL_FALLBACK=false`** if silent fallback to local handlers is unacceptable. |
-| 2 | Remove or override any **`FACTUM_MODE=dev`** and **`GENSYN_AXL_ENABLED=false`** left from local testing (remember **`apps/api/.env` overrides** root `.env`). |
+| 1 | In `.env` / `apps/api/.env`, set **`factuam_MODE=gensyn`**, **`GENSYN_AXL_ENABLED=true`**. Set **`GENSYN_AXL_LOCAL_FALLBACK=false`** if silent fallback to local handlers is unacceptable. |
+| 2 | Remove or override any **`factuam_MODE=dev`** and **`GENSYN_AXL_ENABLED=false`** left from local testing (remember **`apps/api/.env` overrides** root `.env`). |
 | 3 | Run **`yarn local:axl`** (multi-node) or **`yarn local:axl:single`** (hackathon single-node). Then **restart the API** so `.env.local.axl` peer ids and flags load. |
 | 4 | Confirm **`curl "$GENSYN_AXL_API_URL/topology"`** returns **`our_public_key`** and that **`AXL_PEER_*`** (or **`AXL_SINGLE_PEER_ID`** in single-node mode) match. |
 | 5 | Keep **Redis** up for **`GENSYN_AXL_SINGLE_NODE`** reply correlation; optional: **`yarn check:axl`** after workers are running. |
@@ -81,7 +81,7 @@ Use this when you want **one Go `axl/node`** on HTTP **:9002**, a **single mesh 
 **Commands**
 
 - `yarn local:axl:single` — starts the orchestrator-only Go node, writes `.env.local.axl` with `GENSYN_AXL_SINGLE_NODE=true`, `AXL_SINGLE_PEER_ID`, `GENSYN_AXL_API_URL`, and spawns the unified worker (`scripts/local-axl-single.mjs`).
-- `yarn local:axl:single:nodes` — nodes + env file only; run `yarn workspace @factum/api dev:axl-unified` yourself after restarting the API.
+- `yarn local:axl:single:nodes` — nodes + env file only; run `yarn workspace @factuam/api dev:axl-unified` yourself after restarting the API.
 
 **After `.env.local.axl` changes:** restart **`yarn api` / `yarn dev`** so the API loads the new peer id and flags.
 
@@ -94,35 +94,35 @@ Use this when you want **one Go `axl/node`** on HTTP **:9002**, a **single mesh 
 - [ ] **Secrets:** no `private.pem` or operator keys in git; use secret store or mounted files on hosts.
 - [ ] **Identity:** stable `PrivateKeyPath` per role so `our_public_key` in `/topology` does not change unexpectedly.
 - [ ] **Mesh:** `Peers` and optional `Listen` in each `node-config.json` match your deployment (bootstrap URIs, firewall rules).
-- [ ] **Factum env:** set `GENSYN_AXL_API_URL` to the bridge used by the API (orchestrator side). Set each specialist **`AXL_PEER_*`** to the **64-hex** `our_public_key` from that role’s `/topology`. Alternatively, **`GENSYN_AXL_AGENT_PEERS`** can hold a JSON map of orchestrator agent names → hex keys; **per-agent `AXL_PEER_*` env vars win** when both are set (`apps/api/src/services/axl-agent-router.service.ts`). Malformed JSON logs a warning and behaves like an empty map.
-- [ ] **Strictness:** `FACTUM_MODE=gensyn`; turn off `GENSYN_AXL_LOCAL_FALLBACK` when you must not silently run in-process agents.
+- [ ] **factuam env:** set `GENSYN_AXL_API_URL` to the bridge used by the API (orchestrator side). Set each specialist **`AXL_PEER_*`** to the **64-hex** `our_public_key` from that role’s `/topology`. Alternatively, **`GENSYN_AXL_AGENT_PEERS`** can hold a JSON map of orchestrator agent names → hex keys; **per-agent `AXL_PEER_*` env vars win** when both are set (`apps/api/src/services/axl-agent-router.service.ts`). Malformed JSON logs a warning and behaves like an empty map.
+- [ ] **Strictness:** `factuam_MODE=gensyn`; turn off `GENSYN_AXL_LOCAL_FALLBACK` when you must not silently run in-process agents.
 - [ ] **Timeouts:** defaults are **`GENSYN_AXL_TIMEOUT_MS=1500`** and **`GENSYN_AXL_POLL_INTERVAL_MS=250`** (`apps/api/src/config.ts`). The 1.5s window is tight on slow hosts or WAN; increase timeout (and interval if needed) for production or flaky local meshes.
 - [ ] **TS worker `/recv` pacing:** specialist and unified workers use adaptive idle backoff — empty queues sleep up to **`GENSYN_AXL_IDLE_POLL_MAX_MS`** (default **5000**) after repeated HTTP **204** responses, instead of polling forever at the base interval alone. Set **`GENSYN_AXL_RECV_FATAL_AFTER`** (e.g. **30**) to **`process.exit(1)`** after that many consecutive **`recv`** failures (node down); **`0`** keeps the previous infinite-retry behavior on errors.
 - [ ] **REE / chain:** configure per environment (see README “Important env groups”).
 
 ---
 
-## FAQ: `FACTUM_MODE=dev` vs Gensyn / AXL
+## FAQ: `factuam_MODE=dev` vs Gensyn / AXL
 
-**Q: If `FACTUM_MODE` is `dev`, are we running no Gensyn nodes?**
+**Q: If `factuam_MODE` is `dev`, are we running no Gensyn nodes?**
 
-**A: Not automatically.** `FACTUM_MODE` controls **strictness and fallbacks**, not a single “off switch” for the whole Gensyn stack.
+**A: Not automatically.** `factuam_MODE` controls **strictness and fallbacks**, not a single “off switch” for the whole Gensyn stack.
 
-1. **Startup / peer env** (`packages/agent-sdk/src/peer-registry.ts`): Importing `@factum/agent-sdk` evaluates `PEERS` and, in **`gensyn`**, **throws at import time** if any **listed** `AXL_PEER_*` is missing (today: classifier, planner, diagnosis, strategy, training, reflection, verifier, answer). In **`dev`**, those may be empty without crashing. **`AXL_PEER_VALIDATION`** is **not** in that `PEERS` object but is still set by local automation and **must** be present for routed `validation_agent` when you run the full mesh with AXL (same as other specialists); the orchestrator reads it via `config` / `.env.local.axl`.
+1. **Startup / peer env** (`packages/agent-sdk/src/peer-registry.ts`): Importing `@factuam/agent-sdk` evaluates `PEERS` and, in **`gensyn`**, **throws at import time** if any **listed** `AXL_PEER_*` is missing (today: classifier, planner, diagnosis, strategy, training, reflection, verifier, answer). In **`dev`**, those may be empty without crashing. **`AXL_PEER_VALIDATION`** is **not** in that `PEERS` object but is still set by local automation and **must** be present for routed `validation_agent` when you run the full mesh with AXL (same as other specialists); the orchestrator reads it via `config` / `.env.local.axl`.
 
 2. **Where an agent runs** (`apps/api/src/services/axl-agent-router.service.ts`, `invoke`):
-   - **In-process** (`localHandler` only): `FACTUM_MODE=dev` **and** (`GENSYN_AXL_ENABLED=false` **or** no resolved peer id for that agent). This is the usual “fast local” setup.
+   - **In-process** (`localHandler` only): `factuam_MODE=dev` **and** (`GENSYN_AXL_ENABLED=false` **or** no resolved peer id for that agent). This is the usual “fast local” setup.
    - **Over AXL:** `GENSYN_AXL_ENABLED=true` **and** a peer id is set — **even in `dev`**, the router will use `AxlTransportClient` (`/send` / `/recv`) like the gensyn-first path.
    - **`gensyn`** with AXL off or missing peer: **throws** (`AXL peer is required for …`).
-   - After an AXL timeout, `GENSYN_AXL_LOCAL_FALLBACK=true` may fall back to in-process code; the `catch` path still **rethrows when `FACTUM_MODE=gensyn`**, so error-driven fallback is mainly relevant in **`dev`**.
+   - After an AXL timeout, `GENSYN_AXL_LOCAL_FALLBACK=true` may fall back to in-process code; the `catch` path still **rethrows when `factuam_MODE=gensyn`**, so error-driven fallback is mainly relevant in **`dev`**.
 
 **Q: Is Gensyn still the “main” architecture?**
 
-**A:** For demos, hackathons, and production alignment, treat **`FACTUM_MODE=gensyn`** + **AXL enabled** + **real peers** as the canonical story. **`dev`** is primarily **developer ergonomics** (boot without peers, in-process agents when AXL is off or unset). REE and chain are separate flags; see README “Recommended modes” and “Important env groups”.
+**A:** For demos, hackathons, and production alignment, treat **`factuam_MODE=gensyn`** + **AXL enabled** + **real peers** as the canonical story. **`dev`** is primarily **developer ergonomics** (boot without peers, in-process agents when AXL is off or unset). REE and chain are separate flags; see README “Recommended modes” and “Important env groups”.
 
 ```mermaid
 flowchart TD
-  subgraph modeGroup [FACTUM_MODE]
+  subgraph modeGroup [factuam_MODE]
     devNode[dev]
     gensynNode[gensyn]
   end
@@ -146,6 +146,6 @@ flowchart TD
 
 - [README.md](../README.md) — full stack, env groups, troubleshooting
 - [LOCAL_DEVELOPMENT.md](./LOCAL_DEVELOPMENT.md) — short local path
-- [hackathon-axl-single-node.md](./hackathon-axl-single-node.md) — hackathon narrative: logical single node vs Factum processes
+- [hackathon-axl-single-node.md](./hackathon-axl-single-node.md) — hackathon narrative: logical single node vs factuam processes
 - [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md) — env reference
 - [axl/AGENTS.md](../axl/AGENTS.md) — node HTTP API and peer identity

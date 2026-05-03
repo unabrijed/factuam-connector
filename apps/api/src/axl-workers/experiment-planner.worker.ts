@@ -1,4 +1,4 @@
-import { AxlTransportClient } from "@factum/gensyn-axl";
+import { AxlTransportClient } from "@factuam/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
@@ -47,7 +47,7 @@ async function main() {
     logTag: "axl_experiment_planner_worker",
     handleMessages: async (messages) => {
       for (const message of messages) {
-        if (message.topic !== "factum.experiment_planner") continue;
+        if (message.topic !== "factuam.experiment_planner") continue;
         const data = message.data as RequestEnvelope;
         await markAxlWorkerProcessing("experiment-planner");
         if (!message.from || !data.correlationId || !data.payload) continue;
@@ -56,7 +56,7 @@ async function main() {
 
         await client.send({
           to: message.from,
-          topic: "factum.experiment_planner.result",
+          topic: "factuam.experiment_planner.result",
           payload: {
             correlationId: data.correlationId,
             result

@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { sha256Buffer } from "@factum/proof-receipts";
+import { sha256Buffer } from "@factuam/proof-receipts";
 import type { ConnectorResult } from "../../../../packages/connector-sdk/src/index";
 import { DatasetService } from "./dataset.service";
 

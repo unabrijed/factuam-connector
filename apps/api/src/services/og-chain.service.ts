@@ -1,4 +1,4 @@
-import { OgChainClient } from "@factum/og-chain";
+import { OgChainClient } from "@factuam/og-chain";
 import { config } from "../config";
 
 export class OgChainService {

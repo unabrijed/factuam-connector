@@ -102,7 +102,38 @@ export const ExperimentPlanSchema = z.object({
     minimumLiftOverBaseline: z.number(),
     minimumMetricValue: z.number().optional()
   }),
-  limitations: z.array(z.string())
+  limitations: z.array(z.string()),
+  /** Agent-defined feature engineering preferences */
+  featureEngineering: z.object({
+    /** How to handle missing values: "drop" | "median" | "mean" | "mode" */
+    missingStrategy: z.enum(["drop", "median", "mean", "mode"]).optional(),
+    /** Scaling method: "standard" | "minmax" | "none" */
+    scaling: z.enum(["standard", "minmax", "none"]).optional(),
+    /** How to handle categorical columns: "onehot" | "label" | "drop" */
+    categoricalStrategy: z.enum(["onehot", "label", "drop"]).optional(),
+    /** How to handle text columns: "drop" | "length" | "tfidf" */
+    textStrategy: z.enum(["drop", "length", "tfidf"]).optional(),
+    /** Columns to explicitly exclude from training */
+    excludeColumns: z.array(z.string()).optional()
+  }).optional(),
+  /** Agent-defined hyperparameter overrides */
+  hyperparameters: z.object({
+    randomForest: z.object({
+      nEstimators: z.number().optional(),
+      maxDepth: z.number().optional()
+    }).optional(),
+    xgboost: z.object({
+      nEstimators: z.number().optional(),
+      maxDepth: z.number().optional(),
+      learningRate: z.number().optional()
+    }).optional(),
+    logisticRegression: z.object({
+      maxIter: z.number().optional(),
+      C: z.number().optional()
+    }).optional()
+  }).optional(),
+  /** Metric weights for model scoring (higher = more important) */
+  metricWeights: z.record(z.number()).optional()
 });
 export type ExperimentPlan = z.infer<typeof ExperimentPlanSchema>;
 
@@ -291,7 +322,7 @@ export type AgentTraceEntry = z.infer<typeof AgentTraceEntrySchema>;
 
 export const ProofReceiptSchema = z.object({
   version: z.string(),
-  project: z.enum(["Factum", "ProofLayer"]),
+  project: z.enum(["factuam", "ProofLayer"]),
   experimentId: z.string(),
   executionMode: z.enum(executionModes).optional(),
   queryHash: z.string(),

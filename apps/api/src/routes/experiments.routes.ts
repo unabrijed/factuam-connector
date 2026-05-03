@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { z } from "zod";
-import { CreateExperimentInputSchema } from "@factum/shared-types";
+import { CreateExperimentInputSchema } from "@factuam/shared-types";
 import { addExperimentMessageController, createExperimentController, getExperimentController } from "../controllers/experiments.controller";
 
 export const experimentsRouter = new Hono();

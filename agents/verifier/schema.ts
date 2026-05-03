@@ -1,1 +1,1 @@
-export { VerifierResultSchema } from "@factum/shared-types";
+export { VerifierResultSchema } from "@factuam/shared-types";

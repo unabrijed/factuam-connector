@@ -2,8 +2,8 @@ import fs from "node:fs/promises";
 import fsSync from "node:fs";
 import path from "node:path";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
-import { sha256Buffer } from "@factum/proof-receipts";
-import { KaggleConnectorParamsSchema, type KaggleConnectorParams } from "@factum/shared-types";
+import { sha256Buffer } from "@factuam/proof-receipts";
+import { KaggleConnectorParamsSchema, type KaggleConnectorParams } from "@factuam/shared-types";
 import type { KaggleConnector as IKaggleConnector, ConnectorResult } from "../../connector-sdk/src/index";
 
 export type KaggleConnectorOptions = {

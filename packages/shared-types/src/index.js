@@ -238,7 +238,7 @@ export const AgentTraceEntrySchema = z.object({
 });
 export const ProofReceiptSchema = z.object({
     version: z.string(),
-    project: z.enum(["Factum", "ProofLayer"]),
+    project: z.enum(["factuam", "ProofLayer"]),
     experimentId: z.string(),
     executionMode: z.enum(executionModes).optional(),
     queryHash: z.string(),

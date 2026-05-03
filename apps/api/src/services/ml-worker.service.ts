@@ -1,5 +1,5 @@
-import type { DataQualityReport, ExperimentPlan, MLRunResult } from "@factum/shared-types";
-import { DataQualityReportSchema, MLRunResultSchema } from "@factum/shared-types";
+import type { DataQualityReport, ExperimentPlan, MLRunResult } from "@factuam/shared-types";
+import { DataQualityReportSchema, MLRunResultSchema } from "@factuam/shared-types";
 import { config } from "../config";
 import { AppError } from "../lib/errors";
 import { log, logError } from "../lib/logger";

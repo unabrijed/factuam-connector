@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAgentConnectorManifest } from "@factum/agent-connectors";
+import { buildAgentConnectorManifest } from "@factuam/agent-connectors";
 
 describe("agent connector HTTP contract", () => {
   it("connector_registry tools bind to POST /api/connectors/run", () => {

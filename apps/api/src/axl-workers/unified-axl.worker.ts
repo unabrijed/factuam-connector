@@ -2,7 +2,7 @@
  * Single-process AXL consumer for hackathon single-node mode: sole owner of /recv on GENSYN_AXL_API_URL.
  * Replies are published via Redis so the API does not poll the same FIFO.
  */
-import { AxlTransportClient } from "@factum/gensyn-axl";
+import { AxlTransportClient } from "@factuam/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import { axlReplyBroker } from "../services/axl-reply-broker.service";
@@ -15,15 +15,15 @@ import { runAgentByTopic } from "./axl-agent-handlers";
 import { runAxlRecvLoop } from "./axl-recv-runner";
 
 const HANDLED_TOPICS = new Set([
-  "factum.evidence_classifier",
-  "factum.experiment_planner",
-  "factum.validation_agent",
-  "factum.diagnosis_agent",
-  "factum.strategy_agent",
-  "factum.training_agent",
-  "factum.reflection_agent",
-  "factum.verifier",
-  "factum.answer_generator"
+  "factuam.evidence_classifier",
+  "factuam.experiment_planner",
+  "factuam.validation_agent",
+  "factuam.diagnosis_agent",
+  "factuam.strategy_agent",
+  "factuam.training_agent",
+  "factuam.reflection_agent",
+  "factuam.verifier",
+  "factuam.answer_generator"
 ]);
 
 async function main() {
@@ -61,7 +61,7 @@ async function main() {
         await markAxlWorkerProcessing("unified-axl");
         const data = message.data as { correlationId?: string; payload?: unknown } | undefined;
         if (!data?.correlationId) continue;
-        if (topic !== "factum.verifier" && data.payload === undefined) continue;
+        if (topic !== "factuam.verifier" && data.payload === undefined) continue;
 
         const correlationId = data.correlationId;
         const result = await runAgentByTopic(topic, data);

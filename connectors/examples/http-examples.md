@@ -10,7 +10,7 @@ curl -sS "$API_URL/api/connectors"
 
 ## Agent tool manifest (for Claude / MCP wiring)
 
-Returns the same catalog as [`@factum/agent-connectors`](../packages/agent-connectors) (`buildAgentConnectorManifest`), including `binding.route` for each tool.
+Returns the same catalog as [`@factuam/agent-connectors`](../packages/agent-connectors) (`buildAgentConnectorManifest`), including `binding.route` for each tool.
 
 ```bash
 curl -sS "$API_URL/api/connectors/manifest"

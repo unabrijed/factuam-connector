@@ -6,7 +6,7 @@ import type {
   ExperimentPlan,
   ReeVerification,
   VerifierResult
-} from "@factum/shared-types";
+} from "@factuam/shared-types";
 
 export type MessageType =
   | "classify_request"

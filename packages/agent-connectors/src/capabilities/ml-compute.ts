@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ExperimentPlanSchema } from "@factum/shared-types";
+import { ExperimentPlanSchema } from "@factuam/shared-types";
 import type { AgentToolDefinition } from "../tool-definition";
 
 const ValidateDatasetInputSchema = z.object({

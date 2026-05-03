@@ -1,4 +1,4 @@
-import { OgStorageClient } from "@factum/og-storage";
+import { OgStorageClient } from "@factuam/og-storage";
 import { config } from "../config";
 
 export class OgStorageService {

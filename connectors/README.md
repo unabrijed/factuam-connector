@@ -2,7 +2,7 @@
 
 This directory is the **operator and developer entrypoint** for dataset connectors. Connector **implementations** live in workspace packages ([`packages/kaggle-connector`](../packages/kaggle-connector), [`packages/url-connector`](../packages/url-connector), [`packages/connector-sdk`](../packages/connector-sdk)); HTTP wiring lives in [`apps/api`](../apps/api).
 
-## Running Factum to exercise connectors
+## Running factuam to exercise connectors
 
 Connectors are invoked by the API (`POST /api/connectors/run`). From the repo root:
 
@@ -23,7 +23,7 @@ The API stores connector working files under **`LOCAL_CONNECTOR_DIR`** (default 
 
 Example:
 
-- Set `LOCAL_CONNECTOR_DIR=/var/lib/factum/connector-data`
+- Set `LOCAL_CONNECTOR_DIR=/var/lib/factuam/connector-data`
 - Mount a cloud or host volume at that path
 
 Kaggle uses a per-run cache under that tree; disk usage can grow with use.
@@ -38,7 +38,7 @@ Kaggle uses a per-run cache under that tree; disk usage can grow with use.
 
 ## HTTP API (for external agents)
 
-- **`GET /api/connectors/manifest`** — machine-readable tool list (`@factum/agent-connectors`), for Claude / MCP / custom agents.
+- **`GET /api/connectors/manifest`** — machine-readable tool list (`@factuam/agent-connectors`), for Claude / MCP / custom agents.
 - **`POST /api/connectors/run`** — run acquisition with a [`ConnectorRequest`](../packages/shared-types/src/index.ts) body; returns `connectorRunId` and `datasetId`.
 
 See [examples/http-examples.md](./examples/http-examples.md).
@@ -52,10 +52,10 @@ See [examples/http-examples.md](./examples/http-examples.md).
 Build from the **repository root** (requires a running Docker daemon):
 
 ```bash
-docker build -f apps/api/Dockerfile -t factum-api .
+docker build -f apps/api/Dockerfile -t factuam-api .
 ```
 
-The image runs `yarn workspace @factum/api start` (compiled `dist/`, not `dev`). Set `LOCAL_CONNECTOR_DIR` to a path under a **mounted volume** and pass `KAGGLE_API_TOKEN`, `DATABASE_URL`, `REDIS_URL`, and other variables required by [`apps/api/src/config.ts`](../apps/api/src/config.ts). See [`apps/api/Dockerfile`](../apps/api/Dockerfile).
+The image runs `yarn workspace @factuam/api start` (compiled `dist/`, not `dev`). Set `LOCAL_CONNECTOR_DIR` to a path under a **mounted volume** and pass `KAGGLE_API_TOKEN`, `DATABASE_URL`, `REDIS_URL`, and other variables required by [`apps/api/src/config.ts`](../apps/api/src/config.ts). See [`apps/api/Dockerfile`](../apps/api/Dockerfile).
 
 ## Quick smoke test
 
@@ -70,10 +70,10 @@ The script fails **non-zero** if `curl` cannot reach the API or any endpoint ret
 
 ## Automated contract test (Vitest)
 
-Runs from the **`@factum/api`** package root (filter path is relative to `apps/api`, not the repo root):
+Runs from the **`@factuam/api`** package root (filter path is relative to `apps/api`, not the repo root):
 
 ```bash
-yarn workspace @factum/api test test/connectors-contract.test.ts
+yarn workspace @factuam/api test test/connectors-contract.test.ts
 ```
 
 This asserts that agent-connector manifest entries of type `connector_registry` bind to `POST /api/connectors/run`. It does not download data or call Python.

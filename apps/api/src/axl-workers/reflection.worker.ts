@@ -1,5 +1,4 @@
-import { AxlTransportClient } from "@factum/gensyn-axl";
-import type { AttemptSummary } from "@factum/agent-sdk";
+import { AxlTransportClient } from "@factuam/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
@@ -7,23 +6,19 @@ import {
   markAxlWorkerProcessing,
   markAxlWorkerStarted
 } from "../services/axl-worker-health.service";
-import { ReflectionService } from "../services/reflection.service";
+import { ReflectionAgentService } from "../services/agents/reflection-agent.service";
 import { runAxlRecvLoop } from "./axl-recv-runner";
 
 type ReflectionRequestEnvelope = {
   correlationId?: string;
   agent?: string;
-  payload?: {
-    attempt_id: string;
-    attempt_summary: AttemptSummary;
-    success: boolean;
-  };
+  payload?: Parameters<ReflectionAgentService["run"]>[0];
   sentAt?: string;
 };
 
 async function main() {
   const client = new AxlTransportClient({ apiBaseUrl: config.GENSYN_AXL_API_URL });
-  const service = new ReflectionService();
+  const service = new ReflectionAgentService();
 
   await markAxlWorkerStarted({
     worker: "reflection-agent",
@@ -47,30 +42,16 @@ async function main() {
     logTag: "axl_reflection_worker",
     handleMessages: async (messages) => {
       for (const message of messages) {
-        if (message.topic !== "factum.reflection_agent") continue;
+        if (message.topic !== "factuam.reflection_agent") continue;
         const envelope = message.data as ReflectionRequestEnvelope;
         await markAxlWorkerProcessing("reflection-agent");
         if (!message.from || !envelope.correlationId || !envelope.payload) continue;
 
-        const payload = envelope.payload;
-        const summary = payload.attempt_summary;
-        const result = payload.success
-          ? service.reflectSuccess({
-              attemptId: payload.attempt_id,
-              attemptNumber: summary.attempt_number,
-              bestModel: summary.model ?? "unknown",
-              lift: summary.baseline_metric ?? 0,
-              success: summary.significant ?? false
-            })
-          : service.reflectFailure({
-              attemptId: payload.attempt_id,
-              attemptNumber: summary.attempt_number,
-              error: summary.error ?? "Unknown training error"
-            });
+        const result = await service.run(envelope.payload);
 
         await client.send({
           to: message.from,
-          topic: "factum.reflection_agent.result",
+          topic: "factuam.reflection_agent.result",
           payload: {
             correlationId: envelope.correlationId,
             result

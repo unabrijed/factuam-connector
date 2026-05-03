@@ -5,7 +5,7 @@ import { LOCAL_AX_WORKER_PROCESSES, repoRoot } from "./axl-local-topology.mjs";
 
 /** Optional: path to a dotenv file merged into worker env (e.g. generated peer keys). */
 function extraEnvPath() {
-  const fromEnv = process.env.FACTUM_LOCAL_AXL_ENV_FILE?.trim();
+  const fromEnv = process.env.factuam_LOCAL_AXL_ENV_FILE?.trim();
   if (fromEnv) return path.isAbsolute(fromEnv) ? fromEnv : path.join(repoRoot, fromEnv);
   return path.join(repoRoot, ".env.local.axl");
 }
@@ -58,7 +58,7 @@ function stopAll(code = 0) {
 }
 
 for (const w of LOCAL_AX_WORKER_PROCESSES) {
-  const child = spawn("yarn", ["workspace", "@factum/api", w.workspaceScript], {
+  const child = spawn("yarn", ["workspace", "@factuam/api", w.workspaceScript], {
     stdio: "inherit",
     cwd: repoRoot,
     env: {

@@ -9,11 +9,11 @@ const items = [
   },
   {
     q: "Is this financial advice?",
-    a: "No. Factum runs ML experiments and reports results. You own all decisions and compliance responsibilities."
+    a: "No. factuam runs ML experiments and reports results. You own all decisions and compliance responsibilities."
   },
   {
     q: "How is this different from ChatGPT?",
-    a: "Factum runs real ML experiments on datasets with training, backtesting, and verification. It returns metrics, lift scores, and proof receipts — not just text."
+    a: "factuam runs real ML experiments on datasets with training, backtesting, and verification. It returns metrics, lift scores, and proof receipts — not just text."
   },
   {
     q: "What datasets can I use?",

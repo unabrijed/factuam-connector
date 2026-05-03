@@ -1,5 +1,5 @@
 {
-  "name": "@factum/web",
+  "name": "@factuam/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "test": "echo \"No web tests yet\""
   },
   "dependencies": {
-    "@factum/shared-types": "*",
+    "@factuam/shared-types": "*",
     "@tanstack/react-query": "^5.59.16",
     "clsx": "^2.1.1",
     "next": "15.0.3",

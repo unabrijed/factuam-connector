@@ -1,1 +1,1 @@
-export { ProofReceiptSchema } from "@factum/shared-types";
+export { ProofReceiptSchema } from "@factuam/shared-types";

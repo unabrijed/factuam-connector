@@ -6,7 +6,7 @@ import type {
   DatasetDiagnosis,
   ExperimentPlan,
   ExperimentStatus
-} from "@factum/shared-types";
+} from "@factuam/shared-types";
 import { db } from "../db/client";
 import {
   experimentAttempts,

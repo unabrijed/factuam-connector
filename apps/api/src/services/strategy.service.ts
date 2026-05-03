@@ -1,5 +1,5 @@
-import type { DatasetDiagnosis, ExperimentPlan, StrategyDecision } from "@factum/shared-types";
-import type { AttemptSummary } from "@factum/agent-sdk";
+import type { DatasetDiagnosis, ExperimentPlan, StrategyDecision } from "@factuam/shared-types";
+import type { AttemptSummary } from "@factuam/agent-sdk";
 
 export type StrategyServiceResult = StrategyDecision & {
   notes: string;

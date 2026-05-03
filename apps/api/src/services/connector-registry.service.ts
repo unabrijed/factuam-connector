@@ -1,4 +1,4 @@
-import type { ConnectorProvider, ConnectorRequest } from "@factum/shared-types";
+import type { ConnectorProvider, ConnectorRequest } from "@factuam/shared-types";
 import { KaggleDatasetConnector } from "../../../../packages/kaggle-connector/src/index";
 import { UrlCsvConnector } from "../../../../packages/url-connector/src/index";
 import type { Connector, ConnectorResult } from "../../../../packages/connector-sdk/src/index";

@@ -1,6 +1,6 @@
-import type { ExperimentPlan } from "@factum/shared-types";
-import type { AttemptSummary } from "@factum/agent-sdk";
-import { AxlTransportClient } from "@factum/gensyn-axl";
+import type { ExperimentPlan } from "@factuam/shared-types";
+import type { AttemptSummary } from "@factuam/agent-sdk";
+import { AxlTransportClient } from "@factuam/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
@@ -51,7 +51,7 @@ async function main() {
     logTag: "axl_training_worker",
     handleMessages: async (messages) => {
       for (const message of messages) {
-        if (message.topic !== "factum.training_agent") continue;
+        if (message.topic !== "factuam.training_agent") continue;
         const data = message.data as TrainingRequestEnvelope;
         await markAxlWorkerProcessing("training-agent");
         if (!message.from || !data.correlationId || !data.payload) continue;
@@ -60,7 +60,7 @@ async function main() {
 
         await client.send({
           to: message.from,
-          topic: "factum.training_agent.result",
+          topic: "factuam.training_agent.result",
           payload: {
             correlationId: data.correlationId,
             result

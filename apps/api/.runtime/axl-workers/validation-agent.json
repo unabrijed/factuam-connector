@@ -1,11 +1,11 @@
 {
   "worker": "validation-agent",
   "status": "idle",
-  "pid": 16178,
+  "pid": 92789,
   "apiBaseUrl": "http://127.0.0.1:9002",
   "pollIntervalMs": 250,
   "startedAt": "2026-05-02T20:14:54.067Z",
-  "updatedAt": "2026-05-03T11:44:07.864Z",
+  "updatedAt": "2026-05-03T12:04:00.088Z",
   "processedCount": 0,
   "lastErrorAt": "2026-05-02T20:15:11.674Z",
   "lastErrorMessage": "fetch failed"

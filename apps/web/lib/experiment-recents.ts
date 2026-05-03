@@ -1,4 +1,4 @@
-const STORAGE_KEY = "factum:experiments:v1";
+const STORAGE_KEY = "factuam:experiments:v1";
 const MAX_ITEMS = 40;
 
 export type ExperimentRecent = {

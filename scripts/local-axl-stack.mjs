@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Local Gensyn AXL mesh for Factum:
+ * Local Gensyn AXL mesh for factuam:
  * 1. Ensures ed25519 keys under agents/local/<role>/
  * 2. Builds axl/node (make in axl/) if missing
  * 3. Starts one Go AXL process per agents/local/<role>/node-config.json
@@ -271,7 +271,7 @@ async function main() {
         ...sharedPeerEnv,
         GENSYN_AXL_API_URL: `http://127.0.0.1:${w.apiPort}`
       };
-      const child = spawn("yarn", ["workspace", "@factum/api", w.workspaceScript], {
+      const child = spawn("yarn", ["workspace", "@factuam/api", w.workspaceScript], {
         stdio: "inherit",
         env: workerEnv,
         cwd: repoRoot

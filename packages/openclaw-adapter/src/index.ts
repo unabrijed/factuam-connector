@@ -1,23 +1,23 @@
-import type { ProofReceipt } from "@factum/shared-types";
+import type { ProofReceipt } from "@factuam/shared-types";
 
-export type FactumToolInput = {
+export type factuamToolInput = {
   query: string;
   datasetId?: string;
   evidenceMode?: "auto" | "required" | "disabled";
 };
 
-export type FactumToolOutput = {
+export type factuamToolOutput = {
   experimentId: string;
   finalAnswer?: string;
   proofReceipt?: ProofReceipt;
   verificationStatus?: string;
 };
 
-export function createFactumTool(
-  runner: (input: FactumToolInput) => Promise<FactumToolOutput>
+export function createfactuamTool(
+  runner: (input: factuamToolInput) => Promise<factuamToolOutput>
 ) {
   return {
-    name: "factum.runEvidenceExperiment",
+    name: "factuam.runEvidenceExperiment",
     description: "Runs an evidence-backed ML/backtest experiment for predictive agent claims.",
     inputSchema: {
       query: "string",

@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { eq } from "drizzle-orm";
 import { parse } from "csv-parse/sync";
-import { sha256Buffer } from "@factum/proof-receipts";
+import { sha256Buffer } from "@factuam/proof-receipts";
 import { v4 as uuidv4 } from "uuid";
 import { paths } from "../config";
 import { ensureDir } from "../lib/fs";

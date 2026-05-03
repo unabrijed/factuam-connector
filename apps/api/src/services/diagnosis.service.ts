@@ -1,4 +1,4 @@
-import type { DataQualityReport, DatasetDiagnosis, ExperimentPlan } from "@factum/shared-types";
+import type { DataQualityReport, DatasetDiagnosis, ExperimentPlan } from "@factuam/shared-types";
 
 export class DiagnosisService {
   diagnose(input: { plan: ExperimentPlan; validation: DataQualityReport }): DatasetDiagnosis {

@@ -1,5 +1,5 @@
 {
-  "name": "@factum/og-chain",
+  "name": "@factuam/og-chain",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",

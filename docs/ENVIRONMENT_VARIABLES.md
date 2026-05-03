@@ -48,7 +48,7 @@ Source of truth:
 #### `DATABASE_URL`
 
 - required: yes
-- example: `postgres://postgres:postgres@localhost:5432/factum`
+- example: `postgres://postgres:postgres@localhost:5432/factuam`
 
 #### `REDIS_URL`
 
@@ -57,18 +57,18 @@ Source of truth:
 
 ### OpenCode (JSON agents)
 
-The API calls a running [OpenCode](https://opencode.ai/docs/sdk/) server. Configure provider API keys in OpenCode (`opencode.json` or its auth APIs), not in Factum.
+The API calls a running [OpenCode](https://opencode.ai/docs/sdk/) server. Configure provider API keys in OpenCode (`opencode.json` or its auth APIs), not in factuam.
 
 #### OpenCode Go
 
-[OpenCode Go](https://dev.opencode.ai/docs/providers/) is a low-cost subscription for open coding models hosted by the OpenCode team. Enable it in the **OpenCode CLI** (not in Factum’s `.env`):
+[OpenCode Go](https://dev.opencode.ai/docs/providers/) is a low-cost subscription for open coding models hosted by the OpenCode team. Enable it in the **OpenCode CLI** (not in factuam’s `.env`):
 
 1. Run `opencode` to open the TUI, then `/connect` and choose **OpenCode Go** (or use the flow described in the [providers doc](https://dev.opencode.ai/docs/providers/)).
 2. Open [opencode.ai/auth](https://opencode.ai/auth) when prompted, sign in, add billing, and copy your API key.
 3. Paste the key into the TUI. OpenCode stores credentials (commonly `~/.local/share/opencode/auth.json`), not this repo.
 4. Run `/models` in the TUI to see recommended `provider/model` ids.
 5. Keep **`opencode serve`** running (same host/port as `OPENCODE_BASE_URL`, default `http://127.0.0.1:4096`).
-6. Set Factum’s **`OPENCODE_MODEL`** to a model your server actually lists (see `curl` under `OPENCODE_MODEL` below). The default `opencode/gpt-5-nano` may or may not exist on your install—pick one from `/models` or `GET /config/providers`.
+6. Set factuam’s **`OPENCODE_MODEL`** to a model your server actually lists (see `curl` under `OPENCODE_MODEL` below). The default `opencode/gpt-5-nano` may or may not exist on your install—pick one from `/models` or `GET /config/providers`.
 
 #### `OPENCODE_BASE_URL`
 
@@ -79,7 +79,7 @@ The API calls a running [OpenCode](https://opencode.ai/docs/sdk/) server. Config
 
 - default: `opencode/gpt-5-nano`
 - format: `provider/model` (must contain exactly one `/`)
-- **must match a model your OpenCode server actually exposes** — names change between OpenCode releases; the Factum default may not exist on your machine. If prompts fail with `ProviderModelNotFoundError`, list models from the running server (see [OpenCode Server](https://opencode.ai/docs/server)):
+- **must match a model your OpenCode server actually exposes** — names change between OpenCode releases; the factuam default may not exist on your machine. If prompts fail with `ProviderModelNotFoundError`, list models from the running server (see [OpenCode Server](https://opencode.ai/docs/server)):
 
 ```bash
 curl -s "${OPENCODE_BASE_URL:-http://127.0.0.1:4096}/config/providers" | head -c 2000
@@ -183,7 +183,7 @@ export PORT=4000
 export APP_URL=http://localhost:3000
 export API_URL=http://localhost:4000
 export ML_WORKER_URL=http://localhost:8000
-export DATABASE_URL=postgres://postgres:postgres@localhost:5432/factum
+export DATABASE_URL=postgres://postgres:postgres@localhost:5432/factuam
 export REDIS_URL=redis://localhost:6379
 export OPENCODE_BASE_URL=http://127.0.0.1:4096
 export OPENCODE_MODEL=opencode/gpt-5-nano

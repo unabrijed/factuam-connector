@@ -1,4 +1,4 @@
-# Factum — environment template (copy into .env)
+# factuam — environment template (copy into .env)
 #
 # Usage:
 #   cp vars .env
@@ -17,7 +17,7 @@
 # ------------------------------------------------------------------------------
 # Use `gensyn` for hackathon/demo compliance.
 # Use `dev` for local fallback mode.
-FACTUM_MODE=gensyn
+factuam_MODE=gensyn
 
 NODE_ENV=development
 PORT=4000
@@ -30,7 +30,7 @@ RUN_QUEUE_WORKER=true
 # ------------------------------------------------------------------------------
 # Database & Redis
 # ------------------------------------------------------------------------------
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/factum
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/factuam
 REDIS_URL=redis://localhost:6379
 
 # ------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ GENSYN_REE_MAX_NEW_TOKENS=256
 GENSYN_REE_TEMPERATURE=0.3
 
 # Optional aliases read by config / REE package:
-# REE_TASKS_ROOT=/tmp/factum-ree
+# REE_TASKS_ROOT=/tmp/factuam-ree
 # REE_MAX_NEW_TOKENS=256
 # REE_TEMPERATURE=0.3
 # HUGGINGFACE_TOKEN=
@@ -115,7 +115,7 @@ GENSYN_CHAIN_REGISTRY_ADDRESS=
 # Aliases understood elsewhere:
 # GENSYN_RPC_URL=
 # PRIVATE_KEY=0x...
-# FACTUM_REGISTRY_CONTRACT=0x...
+# factuam_REGISTRY_CONTRACT=0x...
 
 # ------------------------------------------------------------------------------
 # Kaggle connector
@@ -142,13 +142,13 @@ OG_CHAIN_RECEIPT_REGISTRY_ADDRESS=0x0000000000000000000000000000000000000001
 # Notes for local testing
 # ------------------------------------------------------------------------------
 # Fast local fallback mode:
-#   FACTUM_MODE=dev
+#   factuam_MODE=dev
 #   GENSYN_AXL_ENABLED=false
 #   GENSYN_AXL_LOCAL_FALLBACK=true
 #   GENSYN_REE_ENABLED=false
 #
 # Full gensyn-first mode:
-#   FACTUM_MODE=gensyn
+#   factuam_MODE=gensyn
 #   GENSYN_AXL_ENABLED=true
 #   GENSYN_AXL_LOCAL_FALLBACK=false
 #   set all AXL_PEER_* vars

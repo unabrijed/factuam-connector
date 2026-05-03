@@ -1,1 +1,1 @@
-export { EvidenceClassifierResultSchema } from "@factum/shared-types";
+export { EvidenceClassifierResultSchema } from "@factuam/shared-types";

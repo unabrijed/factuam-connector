@@ -1,5 +1,5 @@
 import { appConfig } from "./config";
-import type { ConnectorProvider, ConnectorRequest } from "@factum/shared-types";
+import type { ConnectorProvider, ConnectorRequest } from "@factuam/shared-types";
 
 export type ConnectorPreset = {
   id: string;

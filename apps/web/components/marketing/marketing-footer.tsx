@@ -8,8 +8,8 @@ export function MarketingFooter() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="Factum" className="h-7 w-auto" />
-              <span className="text-sm font-semibold text-[var(--text)]">Factum</span>
+              <img src="/logo.png" alt="factuam" className="h-7 w-auto" />
+              <span className="text-sm font-semibold text-[var(--text)]">factuam</span>
             </div>
             <p className="max-w-xs text-sm leading-6 text-[var(--text-soft)]">
               Autonomous evidence engine: plans, runs ML experiments, and verifies results so you know what was tested.
@@ -61,7 +61,7 @@ export function MarketingFooter() {
           </div>
         </div>
         <p className="mt-12 text-center text-xs text-[var(--muted)]">
-          &copy; {year} Factum. AI agents should prove what they tested.
+          &copy; {year} factuam. AI agents should prove what they tested.
         </p>
       </div>
     </footer>

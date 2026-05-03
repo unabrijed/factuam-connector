@@ -1,8 +1,8 @@
-import type { ReeVerification } from "@factum/shared-types";
-import { VerifierResultSchema, type VerifierResult } from "@factum/shared-types";
+import type { ReeVerification } from "@factuam/shared-types";
+import { VerifierResultSchema, type VerifierResult } from "@factuam/shared-types";
 import { config } from "../config";
 
-const reeSystemPrompt = `You are the Factum verifier.
+const reeSystemPrompt = `You are the factuam verifier.
 Return JSON only.
 Be conservative.
 Reject unsupported claims.
@@ -13,12 +13,12 @@ Disallowed claims must include certainty language and unsupported guarantees.`;
 
 export class GensynReeService {
   private clientPromise:
-    | Promise<InstanceType<(typeof import("@factum/gensyn-ree"))["ReeClient"]>>
+    | Promise<InstanceType<(typeof import("@factuam/gensyn-ree"))["ReeClient"]>>
     | null = null;
 
   private async getClient() {
     if (!this.clientPromise) {
-      this.clientPromise = import("@factum/gensyn-ree").then(
+      this.clientPromise = import("@factuam/gensyn-ree").then(
         ({ ReeClient }) =>
           new ReeClient({
             command: config.GENSYN_REE_COMMAND,

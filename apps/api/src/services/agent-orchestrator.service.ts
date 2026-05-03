@@ -5,8 +5,8 @@ import type {
   ExperimentPlan,
   ExperimentStatus,
   VerifierResult
-} from "@factum/shared-types";
-import type { AttemptSummary, ValidateResult } from "@factum/agent-sdk";
+} from "@factuam/shared-types";
+import type { AttemptSummary, ValidateResult } from "@factuam/agent-sdk";
 import { DatasetService } from "./dataset.service";
 import { ExperimentService } from "./experiment.service";
 import { MlWorkerService } from "./ml-worker.service";
@@ -22,8 +22,8 @@ import { log, logError } from "../lib/logger";
 import { ConnectorRunService } from "./connector-run.service";
 import { AxlAgentRouterService } from "./axl-agent-router.service";
 import { DiagnosisService } from "./diagnosis.service";
-import { StrategyService } from "./strategy.service";
-import { ReflectionService } from "./reflection.service";
+import { StrategyAgentService } from "./agents/strategy-agent.service";
+import { ReflectionAgentService } from "./agents/reflection-agent.service";
 import { ValidationService } from "./validation.service";
 import { KaggleSuggestService } from "./kaggle-suggest.service";
 import { ConnectorAcquisitionService } from "./connector-acquisition.service";
@@ -76,7 +76,7 @@ function inferFailureStatusFromMessage(message: string): ExperimentStatus {
     (m.includes("axl") && m.includes("waiting")) ||
     m.includes("/recv") ||
     m.includes("/send") ||
-    m.includes("factum:axl:reply") ||
+    m.includes("factuam:axl:reply") ||
     m.includes("reply broker");
 
   if (axlLikely) return "FAILED_AXL_TRANSPORT";
@@ -213,8 +213,8 @@ export class AgentOrchestratorService {
     private readonly planner = new ExperimentPlannerService(),
     private readonly validation = new ValidationService(),
     private readonly diagnosis = new DiagnosisService(),
-    private readonly strategy = new StrategyService(),
-    private readonly reflection = new ReflectionService(),
+    private readonly strategy = new StrategyAgentService(),
+    private readonly reflection = new ReflectionAgentService(),
     private readonly mlWorker = new MlWorkerService(),
     private readonly verifier = new VerifierService(),
     private readonly answerGenerator = new AnswerGeneratorService(),
@@ -370,7 +370,7 @@ export class AgentOrchestratorService {
         payload: planningPayload,
         localHandler: () => this.planner.run(planningPayload)
       });
-      const plan = planResult.result;
+      let plan = planResult.result;
       log("info", "experiment_plan_created", {
         experimentId,
         taskType: plan.taskType,
@@ -393,12 +393,40 @@ export class AgentOrchestratorService {
 
       const missingColumns = findMissingColumns(plan, dataset.schemaJson);
       if (missingColumns.length) {
-        await this.experiments.fail(
-          experimentId,
-          "REJECTED_INSUFFICIENT_DATA",
-          `Dataset is missing required columns: ${missingColumns.join(", ")}`
-        );
-        return;
+        log("warn", "experiment_missing_columns_recovery", { experimentId, missingColumns });
+        const recoveryPayload = {
+          query: experiment.query,
+          datasetSchema: dataset.schemaJson,
+          currentPlan: plan,
+          missingColumns,
+          issue: "missing_required_columns" as const
+        };
+        const recoveredPlanResult = await this.axlRouter.invoke({
+          agent: "experiment_planner",
+          payload: recoveryPayload,
+          localHandler: () => this.planner.run({
+            query: `Re-plan for dataset that is missing these required columns: ${missingColumns.join(", ")}. Original query: ${experiment.query}. Available columns: ${JSON.stringify((dataset.schemaJson as { columns?: Array<{ name: string }> })?.columns?.map(c => c.name) ?? [])}`,
+            datasetSchema: dataset.schemaJson
+          })
+        });
+        const recoveredPlan = recoveredPlanResult.result;
+        const stillMissing = findMissingColumns(recoveredPlan, dataset.schemaJson);
+        if (stillMissing.length) {
+          await this.experiments.fail(
+            experimentId,
+            "REJECTED_INSUFFICIENT_DATA",
+            `Agent couldn't resolve missing columns: ${stillMissing.join(", ")}. Original missing: ${missingColumns.join(", ")}`
+          );
+          return;
+        }
+        log("info", "experiment_missing_columns_recovered", { experimentId, recoveredColumns: recoveredPlan.requiredColumns });
+        await this.experiments.updatePlan(experimentId, recoveredPlan);
+        await this.experiments.appendProgress(experimentId, {
+          stage: "plan_recovered",
+          message: `Agent recovered from missing columns: adjusted plan to use available columns`,
+          details: { originalMissing: missingColumns, newRequired: recoveredPlan.requiredColumns }
+        });
+        plan = recoveredPlan;
       }
 
       await this.experiments.updateStatus(experimentId, "VALIDATING_DATA");
@@ -533,10 +561,10 @@ export class AgentOrchestratorService {
         const strategyResult = await this.axlRouter.invoke({
           agent: "strategy_agent",
           payload: strategyPayload,
-          localHandler: () => Promise.resolve(this.strategy.decide(strategyPayload))
+          localHandler: () => this.strategy.run(strategyPayload)
         });
         const strategyDecision = strategyResult.result;
-        const attemptPlan = strategyDecision.plan;
+        const attemptPlan = strategyDecision.plan as ExperimentPlan;
         agentTrace.push({ ...strategyResult.trace, step: agentTrace.length + 1 });
 
         await this.experiments.addStrategyDecision({
@@ -633,34 +661,25 @@ export class AgentOrchestratorService {
 
           const success = meetsSuccessCriteria(attemptPlan, attemptResult);
           const attemptScore = pickPrimaryMetric(attemptPlan, attemptResult.bestModel.metrics) + attemptResult.backtest.liftOverBaseline / 1000;
-          const attemptSummary = this.reflection.summarizeAttempt({
-            attemptNumber,
+          const attemptSummary: AttemptSummary = {
+            attempt_number: attemptNumber,
             strategy: strategyDecision.strategyKey,
             status: "success",
-            primaryMetric: pickPrimaryMetric(attemptPlan, attemptResult.bestModel.metrics),
-            baselineMetric: attemptResult.backtest.liftOverBaseline,
+            primary_metric: pickPrimaryMetric(attemptPlan, attemptResult.bestModel.metrics),
+            baseline_metric: attemptResult.backtest.liftOverBaseline,
             model: attemptResult.bestModel.modelName,
             significant: success
-          });
+          };
           const reflectionPayload = {
             plan: attemptPlan,
-            attempt_id: attemptId,
-            attempt_summary: attemptSummary,
+            attemptId,
+            attemptSummary,
             success
           };
           const reflectionResult = await this.axlRouter.invoke({
             agent: "reflection_agent",
             payload: reflectionPayload,
-            localHandler: () =>
-              Promise.resolve(
-                this.reflection.reflectSuccess({
-                  attemptId,
-                  attemptNumber,
-                  bestModel: attemptResult.bestModel.modelName,
-                  lift: attemptResult.backtest.liftOverBaseline,
-                  success
-                })
-              )
+            localHandler: () => this.reflection.run(reflectionPayload)
           });
           agentTrace.push({ ...reflectionResult.trace, step: agentTrace.length + 1 });
           await this.experiments.addReflection({
@@ -696,23 +715,23 @@ export class AgentOrchestratorService {
           }
         } catch (error) {
           const message = error instanceof Error ? error.message : "Unknown training error";
-          const attemptSummary = this.reflection.summarizeAttempt({
-            attemptNumber,
+          const attemptSummary: AttemptSummary = {
+            attempt_number: attemptNumber,
             strategy: strategyDecision.strategyKey,
             status: "failed",
             error: message
-          });
+          };
           attemptSummaries.push(attemptSummary);
           const reflectionPayload = {
             plan: attemptPlan,
-            attempt_id: attemptId,
-            attempt_summary: attemptSummary,
+            attemptId,
+            attemptSummary,
             success: false
           };
           const reflectionResult = await this.axlRouter.invoke({
             agent: "reflection_agent",
             payload: reflectionPayload,
-            localHandler: () => Promise.resolve(this.reflection.reflectFailure({ attemptId, attemptNumber, error: message }))
+            localHandler: () => this.reflection.run(reflectionPayload)
           });
           agentTrace.push({ ...reflectionResult.trace, step: agentTrace.length + 1 });
           await this.experiments.addReflection({

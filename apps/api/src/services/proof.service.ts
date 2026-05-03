@@ -11,8 +11,8 @@ import type {
   ReeVerification,
   SourceTrace,
   VerifierResult
-} from "@factum/shared-types";
-import { createReceipt, sha256Json, sha256String, asHex32 } from "@factum/proof-receipts";
+} from "@factuam/shared-types";
+import { createReceipt, sha256Json, sha256String, asHex32 } from "@factuam/proof-receipts";
 import { db } from "../db/client";
 import { proofReceipts } from "../db/schema";
 import { config, paths } from "../config";

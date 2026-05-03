@@ -6,7 +6,7 @@ const schema = z.object({
   resultSummary: z.record(z.any())
 });
 
-const systemPrompt = `You are the Factum answer generator.
+const systemPrompt = `You are the factuam answer generator.
 Return JSON only.
 Write a user-facing answer using this format:
 Recommendation:

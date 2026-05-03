@@ -1,5 +1,5 @@
 {
-  "name": "@factum/proof-receipts",
+  "name": "@factuam/proof-receipts",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@factum/shared-types": "*",
+    "@factuam/shared-types": "*",
     "zod": "^3.23.8"
   },
   "devDependencies": {

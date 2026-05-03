@@ -1,4 +1,4 @@
-import type { ConnectorRequest } from "@factum/shared-types";
+import type { ConnectorRequest } from "@factuam/shared-types";
 import { ConnectorRunService } from "./connector-run.service";
 import { ConnectorRegistryService } from "./connector-registry.service";
 import { DatasetBuilderService } from "./dataset-builder.service";

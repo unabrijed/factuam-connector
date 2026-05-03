@@ -1,5 +1,5 @@
 {
-  "name": "@factum/connector-sdk",
+  "name": "@factuam/connector-sdk",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
@@ -10,6 +10,6 @@
     "test": "echo \"No tests in connector-sdk\""
   },
   "dependencies": {
-    "@factum/shared-types": "*"
+    "@factuam/shared-types": "*"
   }
 }

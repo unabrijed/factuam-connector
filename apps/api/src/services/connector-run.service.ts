@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import type { ConnectorProvider, ConnectorRunStatus } from "@factum/shared-types";
+import type { ConnectorProvider, ConnectorRunStatus } from "@factuam/shared-types";
 import { db } from "../db/client";
 import { connectorRuns } from "../db/schema";
 

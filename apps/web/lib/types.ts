@@ -1,1 +1,1 @@
-export type { Experiment, ProofReceipt, ExperimentPlan } from "@factum/shared-types";
+export type { Experiment, ProofReceipt, ExperimentPlan } from "@factuam/shared-types";

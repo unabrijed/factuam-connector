@@ -1,11 +1,11 @@
 {
   "worker": "strategy-agent",
   "status": "idle",
-  "pid": 16124,
+  "pid": 92807,
   "apiBaseUrl": "http://127.0.0.1:9002",
   "pollIntervalMs": 250,
   "startedAt": "2026-05-02T20:14:58.339Z",
-  "updatedAt": "2026-05-03T11:44:07.667Z",
+  "updatedAt": "2026-05-03T12:04:00.529Z",
   "lastProcessedAt": "2026-05-03T08:44:17.891Z",
   "processedCount": 1,
   "lastErrorAt": "2026-05-02T20:15:11.698Z",

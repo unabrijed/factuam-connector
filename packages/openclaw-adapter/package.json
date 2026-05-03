@@ -1,5 +1,5 @@
 {
-  "name": "@factum/openclaw-adapter",
+  "name": "@factuam/openclaw-adapter",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
@@ -10,6 +10,6 @@
     "test": "echo \"No tests in openclaw-adapter\""
   },
   "dependencies": {
-    "@factum/shared-types": "*"
+    "@factuam/shared-types": "*"
   }
 }

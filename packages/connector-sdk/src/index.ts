@@ -1,4 +1,4 @@
-import type { ConnectorProvider, KaggleConnectorParams } from "@factum/shared-types";
+import type { ConnectorProvider, KaggleConnectorParams } from "@factuam/shared-types";
 
 export type RawArtifact = {
   type: "archive" | "source_file";

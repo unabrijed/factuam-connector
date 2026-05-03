@@ -1,4 +1,4 @@
-import { GensynChainClient } from "@factum/gensyn-chain";
+import { GensynChainClient } from "@factuam/gensyn-chain";
 import { config } from "../config";
 
 /** Public RPC defaults from docs.gensyn.network/network-information */
@@ -16,7 +16,7 @@ function resolvePrivateKey(): string | undefined {
 
 function resolveRegistryAddress(): string | undefined {
   const a = config.GENSYN_CHAIN_REGISTRY_ADDRESS?.trim();
-  const b = process.env.FACTUM_REGISTRY_CONTRACT?.trim();
+  const b = process.env.factuam_REGISTRY_CONTRACT?.trim();
   return a || b || undefined;
 }
 

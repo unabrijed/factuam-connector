@@ -1,4 +1,4 @@
-import { AxlTransportClient, type AxlMessageEnvelope } from "@factum/gensyn-axl";
+import { AxlTransportClient, type AxlMessageEnvelope } from "@factuam/gensyn-axl";
 
 const replyQueue = new Map<string, Array<(msg: unknown) => void>>();
 let pollerRunning = false;

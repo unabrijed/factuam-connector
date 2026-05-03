@@ -1,5 +1,5 @@
 {
-  "name": "@factum/url-connector",
+  "name": "@factuam/url-connector",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
@@ -10,8 +10,8 @@
     "test": "echo \"No tests in url-connector\""
   },
   "dependencies": {
-    "@factum/connector-sdk": "*",
-    "@factum/proof-receipts": "*",
-    "@factum/shared-types": "*"
+    "@factuam/connector-sdk": "*",
+    "@factuam/proof-receipts": "*",
+    "@factuam/shared-types": "*"
   }
 }

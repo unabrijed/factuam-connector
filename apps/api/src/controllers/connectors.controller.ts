@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { buildAgentConnectorManifest } from "@factum/agent-connectors";
-import { ConnectorRequestSchema, CreateExperimentInputSchema, type ConnectorRequest } from "@factum/shared-types";
+import { buildAgentConnectorManifest } from "@factuam/agent-connectors";
+import { ConnectorRequestSchema, CreateExperimentInputSchema, type ConnectorRequest } from "@factuam/shared-types";
 import { ConnectorAcquisitionService } from "../services/connector-acquisition.service";
 import { ExperimentService } from "../services/experiment.service";
 import { enqueueExperiment } from "../jobs/queue";

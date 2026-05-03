@@ -1,5 +1,5 @@
-import type { AttemptReflection, FailureCategory } from "@factum/shared-types";
-import type { AttemptSummary } from "@factum/agent-sdk";
+import type { AttemptReflection, FailureCategory } from "@factuam/shared-types";
+import type { AttemptSummary } from "@factuam/agent-sdk";
 
 export class ReflectionService {
   classifyFailure(message: string): FailureCategory {

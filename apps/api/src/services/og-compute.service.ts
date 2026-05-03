@@ -1,14 +1,14 @@
-import { sha256String } from "@factum/proof-receipts";
+import { sha256String } from "@factuam/proof-receipts";
 import { config } from "../config";
 
 export class OgComputeService {
   private clientPromise:
-    | Promise<InstanceType<(typeof import("@factum/og-compute"))["OgComputeClient"]> | null>
+    | Promise<InstanceType<(typeof import("@factuam/og-compute"))["OgComputeClient"]> | null>
     | null = null;
 
   private async getClient() {
     if (!this.clientPromise) {
-      this.clientPromise = import("@factum/og-compute")
+      this.clientPromise = import("@factuam/og-compute")
         .then(({ OgComputeClient }) =>
           new OgComputeClient({
             rpcUrl: config.OG_COMPUTE_RPC,

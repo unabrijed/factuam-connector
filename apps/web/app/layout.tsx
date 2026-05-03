@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 import { Providers } from "./providers";
 
 export const metadata = {
-  title: "Factum — AI agents should prove what they tested",
+  title: "factuam — AI agents should prove what they tested",
   description:
-    "Factum turns prompts into evidence plans, runs experiments and backtests, and returns verified answers with proof receipts."
+    "factuam turns prompts into evidence plans, runs experiments and backtests, and returns verified answers with proof receipts."
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

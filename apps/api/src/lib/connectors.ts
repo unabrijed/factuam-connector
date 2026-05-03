@@ -1,4 +1,4 @@
-import type { ConnectorRequest } from "@factum/shared-types";
+import type { ConnectorRequest } from "@factuam/shared-types";
 
 export function getDatasetNameFromConnectorRequest(request: ConnectorRequest) {
   switch (request.provider) {

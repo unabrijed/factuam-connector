@@ -1,4 +1,4 @@
-# Factum — Validation Agent (AXL-routed) + Complete Message Contracts
+# factuam — Validation Agent (AXL-routed) + Complete Message Contracts
 
 ## What this file covers
 
@@ -28,7 +28,7 @@ Orchestrator
   → reflection_request → Reflection  → reflection_result
   → verify_request     → Verifier    → verify_result  (+REE)
   → answer_request     → Answer      → answer_result
-  → FactumRegistry.anchor()
+  → FactuamRegistry.anchor()
 ```
 
 ---
@@ -615,7 +615,7 @@ The `data_hash` from `ValidateResult` now flows all the way through to the proof
 ```typescript
 function requirePeer(name: string, envVar: string): string {
   const val = process.env[envVar];
-  if (!val && process.env.FACTUM_MODE !== "dev") {
+  if (!val && process.env.factuam_MODE !== "dev") {
     throw new Error(
       `[peer-registry] ${envVar} not set. ` +
       `Start the ${name} AXL node and copy its 64-char public key here.`
@@ -643,7 +643,7 @@ export const PEERS = {
 
 ```bash
 # ── Mode ─────────────────────────────────────────────────────────────────────
-FACTUM_MODE=gensyn
+factuam_MODE=gensyn
 
 # ── AXL API URLs ──────────────────────────────────────────────────────────────
 AXL_API_URL_ORCHESTRATOR=http://127.0.0.1:9002
@@ -677,7 +677,7 @@ MAX_ATTEMPTS=3
 
 # ── REE ───────────────────────────────────────────────────────────────────────
 REE_ENABLED=true
-REE_TASKS_ROOT=/tmp/factum-ree
+REE_TASKS_ROOT=/tmp/factuam-ree
 REE_MODEL_NAME=Qwen/Qwen3-0.6B
 REE_OPERATION_SET=reproducible
 REE_MAX_NEW_TOKENS=256
@@ -686,7 +686,7 @@ HUGGINGFACE_TOKEN=
 # ── Gensyn Chain ──────────────────────────────────────────────────────────────
 GENSYN_NETWORK=testnet
 GENSYN_RPC_URL=https://gensyn-testnet.g.alchemy.com/public
-FACTUM_REGISTRY_CONTRACT=
+factuam_REGISTRY_CONTRACT=
 PRIVATE_KEY=
 DELPHI_NETWORK=testnet
 DELPHI_SIGNER_TYPE=private_key

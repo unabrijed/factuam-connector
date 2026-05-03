@@ -3,7 +3,7 @@ import { execFile } from "node:child_process";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { ReeVerification } from "@factum/shared-types";
+import type { ReeVerification } from "@factuam/shared-types";
 
 const execFileAsync = promisify(execFile);
 
@@ -30,7 +30,7 @@ export type ReeClientConfig = {
   command?: string;
   /** Legacy `ree` only: extra args before `--input` */
   baseArgs?: string[];
-  /** Override tasks root for `gensyn-sdk` (else `REE_TASKS_ROOT` / `/tmp/factum-ree`) */
+  /** Override tasks root for `gensyn-sdk` (else `REE_TASKS_ROOT` / `/tmp/factuam-ree`) */
   tasksRoot?: string;
   maxNewTokens?: number;
   temperature?: number;
@@ -50,7 +50,7 @@ function tasksRootFromEnv(config?: ReeClientConfig): string {
     config?.tasksRoot?.trim() ||
     process.env.REE_TASKS_ROOT?.trim() ||
     process.env.GENSYN_REE_TASKS_ROOT?.trim() ||
-    "/tmp/factum-ree"
+    "/tmp/factuam-ree"
   );
 }
 

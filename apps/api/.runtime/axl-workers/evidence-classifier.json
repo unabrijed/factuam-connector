@@ -1,11 +1,11 @@
 {
   "worker": "evidence-classifier",
   "status": "idle",
-  "pid": 16146,
+  "pid": 92797,
   "apiBaseUrl": "http://127.0.0.1:9002",
   "pollIntervalMs": 250,
   "startedAt": "2026-05-02T20:14:18.589Z",
-  "updatedAt": "2026-05-03T11:44:08.205Z",
+  "updatedAt": "2026-05-03T12:04:00.477Z",
   "processedCount": 0,
   "lastErrorAt": "2026-05-02T20:15:11.698Z",
   "lastErrorMessage": "fetch failed"

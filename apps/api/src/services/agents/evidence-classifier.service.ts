@@ -1,7 +1,7 @@
-import { EvidenceClassifierResultSchema, type EvidenceClassifierResult } from "@factum/shared-types";
+import { EvidenceClassifierResultSchema, type EvidenceClassifierResult } from "@factuam/shared-types";
 import { OpencodeJsonAgentService } from "../opencode-json-agent.service";
 
-const systemPrompt = `You are the Factum evidence classifier.
+const systemPrompt = `You are the factuam evidence classifier.
 Return JSON only.
 Return an object with exactly these keys:
 - requiresEvidenceMode: boolean

@@ -13,15 +13,12 @@ export default function ProductLayout({ children }: { children: ReactNode }) {
         <Link href="/" className="flex min-w-0 flex-1 items-center gap-3 sm:flex-initial">
           <img
             src="/logo.png"
-            alt="Factum"
+            alt="factuam"
             className="h-8 w-auto shrink-0"
           />
-          <div className="min-w-0">
-            <div className="text-sm font-medium tracking-[0.22em] text-[var(--muted)] uppercase">Factum</div>
-            <div className="hidden truncate text-sm text-[var(--text-soft)] sm:block">
-              AI agents should prove what they tested.
-            </div>
-          </div>
+          <p className="hidden min-w-0 truncate text-sm text-[var(--text-soft)] sm:block">
+            AI agents should prove what they tested.
+          </p>
         </Link>
         <nav className="flex items-center gap-2 sm:gap-3" aria-label="Product">
           <Link

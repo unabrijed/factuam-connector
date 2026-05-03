@@ -1,5 +1,5 @@
-import type { ProofReceipt } from "@factum/shared-types";
-import { ProofReceiptSchema } from "@factum/shared-types";
+import type { ProofReceipt } from "@factuam/shared-types";
+import { ProofReceiptSchema } from "@factuam/shared-types";
 
 export type CreateReceiptInput = Omit<ProofReceipt, "project" | "version"> & {
   version?: string;
@@ -8,7 +8,7 @@ export type CreateReceiptInput = Omit<ProofReceipt, "project" | "version"> & {
 export function createReceipt(input: CreateReceiptInput): ProofReceipt {
   return ProofReceiptSchema.parse({
     version: input.version ?? "0.1.0",
-    project: "Factum",
+    project: "factuam",
     ...input
   });
 }

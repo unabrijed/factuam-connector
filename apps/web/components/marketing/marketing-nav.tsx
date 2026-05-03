@@ -4,9 +4,8 @@ import { ThemeToggle } from "../theme-toggle";
 export function MarketingNav() {
   return (
     <header className="sticky top-6 z-20 flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-[var(--border)] bg-[var(--surface-elevated)]/90 px-5 py-4 shadow-[var(--shadow-soft)] backdrop-blur-xl">
-      <Link href="/" className="flex items-center gap-3">
-        <img src="/logo.png" alt="Factum" className="h-8 w-auto shrink-0" />
-        <div className="text-sm font-medium tracking-[0.22em] text-[var(--muted)] uppercase">Factum</div>
+      <Link href="/" className="flex items-center">
+        <img src="/logo.png" alt="factuam" className="h-8 w-auto shrink-0" />
       </Link>
       <nav className="flex flex-wrap items-center gap-2 sm:gap-4" aria-label="Marketing">
         <a

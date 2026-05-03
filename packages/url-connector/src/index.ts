@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { sha256Buffer } from "@factum/proof-receipts";
-import { UrlCsvConnectorParamsSchema, type UrlCsvConnectorParams } from "@factum/shared-types";
+import { sha256Buffer } from "@factuam/proof-receipts";
+import { UrlCsvConnectorParamsSchema, type UrlCsvConnectorParams } from "@factuam/shared-types";
 import type { Connector, ConnectorResult } from "../../connector-sdk/src/index";
 
 export type UrlCsvConnectorOptions = {

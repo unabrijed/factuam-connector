@@ -1,4 +1,4 @@
-import { AxlTransportClient } from "@factum/gensyn-axl";
+import { AxlTransportClient } from "@factuam/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
@@ -42,7 +42,7 @@ async function main() {
     logTag: "axl_validation_worker",
     handleMessages: async (messages) => {
       for (const message of messages) {
-        if (message.topic !== "factum.validation_agent") continue;
+        if (message.topic !== "factuam.validation_agent") continue;
         const data = message.data as ValidationRequestEnvelope;
         await markAxlWorkerProcessing("validation-agent");
         if (!message.from || !data.correlationId || !data.payload) continue;
@@ -51,7 +51,7 @@ async function main() {
 
         await client.send({
           to: message.from,
-          topic: "factum.validation_agent.result",
+          topic: "factuam.validation_agent.result",
           payload: {
             correlationId: data.correlationId,
             result

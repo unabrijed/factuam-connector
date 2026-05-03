@@ -1,6 +1,6 @@
 # Hackathon: single logical AXL node (concept vs code)
 
-This page is the **product and operator narrative** for a simplified Gensyn / AXL story: one clear boundary after connectors, optional chain anchoring at the end, and an honest map to **how Factum implements** that story today.
+This page is the **product and operator narrative** for a simplified Gensyn / AXL story: one clear boundary after connectors, optional chain anchoring at the end, and an honest map to **how factuam implements** that story today.
 
 For env profiles and commands, see [nodes-runbook.md](./nodes-runbook.md) (including the **Single-node AXL (hackathon)** section).
 
@@ -42,7 +42,7 @@ flowchart LR
 
 ---
 
-## Concept vs implementation (Factum today)
+## Concept vs implementation (factuam today)
 
 The diagram is **logical**. In the repo, processes are still split so we can use the **real Gensyn AXL** HTTP bridge (`/send`, `/recv`, `/topology`) for demos and hackathon checks.
 
@@ -53,7 +53,7 @@ The diagram is **logical**. In the repo, processes are still split so we can use
 | REE inside verify | [`VerifierService`](../apps/api/src/services/agents/verifier.service.ts) runs REE when configured; orchestration calls verifier before answer / proof receipt flow. |
 | Optional chain | [`ProofService`](../apps/api/src/services/proof.service.ts) + Gensyn chain / 0G paths as documented in [architecture-flow.md](./architecture-flow.md). |
 
-**Closest match to “no AXL transport” for development:** `FACTUM_MODE=dev` and **`GENSYN_AXL_ENABLED=false`** — specialists run **in-process** via `localHandler` with no `/send` hop.
+**Closest match to “no AXL transport” for development:** `factuam_MODE=dev` and **`GENSYN_AXL_ENABLED=false`** — specialists run **in-process** via `localHandler` with no `/send` hop.
 
 ---
 
@@ -61,7 +61,7 @@ The diagram is **logical**. In the repo, processes are still split so we can use
 
 | Piece | Role |
 |-------|------|
-| [`apps/api/src/services/axl-agent-router.service.ts`](../apps/api/src/services/axl-agent-router.service.ts) | Chooses AXL vs in-process; builds `factum.<agent>` topics. |
+| [`apps/api/src/services/axl-agent-router.service.ts`](../apps/api/src/services/axl-agent-router.service.ts) | Chooses AXL vs in-process; builds `factuam.<agent>` topics. |
 | [`apps/api/src/services/axl-reply-broker.service.ts`](../apps/api/src/services/axl-reply-broker.service.ts) | Single-node mode: correlates replies over Redis. |
 | [`apps/api/src/axl-workers/unified-axl.worker.ts`](../apps/api/src/axl-workers/unified-axl.worker.ts) | Single recv loop for all agent topics on one HTTP bridge. |
 | [`apps/api/src/axl-workers/axl-agent-handlers.ts`](../apps/api/src/axl-workers/axl-agent-handlers.ts) | Dispatches topic → existing services. |
@@ -71,4 +71,4 @@ The diagram is **logical**. In the repo, processes are still split so we can use
 
 ## Future (out of scope here)
 
-A **true single OS process** that embeds the entire orchestrator and ML stack inside the Go `node` binary would be a **major product change**. Today’s split keeps **Factum’s experiment API**, **Postgres**, and **AXL interoperability** while still telling a simple hackathon story on stage.
+A **true single OS process** that embeds the entire orchestrator and ML stack inside the Go `node` binary would be a **major product change**. Today’s split keeps **factuam’s experiment API**, **Postgres**, and **AXL interoperability** while still telling a simple hackathon story on stage.

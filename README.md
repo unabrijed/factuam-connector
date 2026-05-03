@@ -1,6 +1,6 @@
-# Factum
+# factuam
 
-Factum is an evidence workflow app for tabular datasets with a **Gensyn-first multi-agent architecture**.
+factuam is an evidence workflow app for tabular datasets with a **Gensyn-first multi-agent architecture**.
 It lets you upload or import data, run an orchestrated experiment, watch specialist agents work through validation/strategy/training, and return a proof-backed result with saved artifacts.
 
 ## What this project does
@@ -41,13 +41,13 @@ The app now supports:
 - `apps/web` — Next.js frontend on `http://localhost:3000`
 - `apps/api` — Hono API + experiment orchestrator on `http://localhost:4000`
 - `workers/ml-runner` — FastAPI ML runtime on `http://localhost:8000`
-- **OpenCode** — HTTP server for JSON structured-agent calls (default `http://127.0.0.1:4096`; started separately via `opencode serve`). Factum does not bundle this process.
+- **OpenCode** — HTTP server for JSON structured-agent calls (default `http://127.0.0.1:4096`; started separately via `opencode serve`). factuam does not bundle this process.
 - `postgres` — PostgreSQL on `localhost:5432`
 - `redis` — Redis on `localhost:6379`
 
 ### Gensyn/agent runtime pieces
 
-Factum now has a **swarm of specialist workers** coordinated by the API orchestrator.
+factuam now has a **swarm of specialist workers** coordinated by the API orchestrator.
 
 AXL workers currently supported:
 - `evidence-classifier`
@@ -64,18 +64,18 @@ AXL workers currently supported:
 
 Two modes exist:
 
-- `FACTUM_MODE=gensyn`
+- `factuam_MODE=gensyn`
   - Gensyn-first mode
   - missing AXL peers should fail hard
   - intended for hackathon/demo compliance
-- `FACTUM_MODE=dev`
+- `factuam_MODE=dev`
   - local fallback mode
   - local service handlers remain available if AXL is unavailable
 
 For hackathon/demo runs, use:
 
 ```bash
-FACTUM_MODE=gensyn
+factuam_MODE=gensyn
 GENSYN_AXL_ENABLED=true
 GENSYN_AXL_LOCAL_FALLBACK=false
 ```
@@ -124,7 +124,7 @@ Users can now message an experiment to:
 
 ## Local development setup
 
-For a **repeatable run order** (infra, local AXL mesh vs fast dev, production checks) and how **`FACTUM_MODE` relates to Gensyn/AXL**, see [docs/nodes-runbook.md](./docs/nodes-runbook.md). The short path without Gensyn is [docs/LOCAL_DEVELOPMENT.md](./docs/LOCAL_DEVELOPMENT.md).
+For a **repeatable run order** (infra, local AXL mesh vs fast dev, production checks) and how **`factuam_MODE` relates to Gensyn/AXL**, see [docs/nodes-runbook.md](./docs/nodes-runbook.md). The short path without Gensyn is [docs/LOCAL_DEVELOPMENT.md](./docs/LOCAL_DEVELOPMENT.md).
 
 ### Run everything locally (checklist)
 
@@ -143,17 +143,17 @@ Verify: [Health / verification commands](#health--verification-commands) below (
 | Goal | What you start | Notes |
 |------|----------------|-------|
 | **Default app development** | `docker compose up -d postgres redis` → **`opencode serve`** → `yarn db:migrate` → `yarn dev` | **`opencode serve`** must run whenever experiments hit JSON agents (classifier, planner, verifier, answer). `yarn dev` runs **web + API + ML worker** (Turbo). No Go AXL unless you add it. |
-| **Fast / no AXL transport** | Same infra + set `FACTUM_MODE=dev`, `GENSYN_AXL_ENABLED=false`, `GENSYN_AXL_LOCAL_FALLBACK=true` | Specialists run **in-process** in the API; good when you are not testing the mesh. |
+| **Fast / no AXL transport** | Same infra + set `factuam_MODE=dev`, `GENSYN_AXL_ENABLED=false`, `GENSYN_AXL_LOCAL_FALLBACK=true` | Specialists run **in-process** in the API; good when you are not testing the mesh. |
 | **Full local Gensyn mesh** | Infra + app + `yarn local:axl` **or** `yarn local:axl:nodes` + `yarn dev:axl` | Writes `.env.local.axl`; **restart `yarn api` / `yarn dev`** after it changes. See [nodes-runbook](./docs/nodes-runbook.md). |
-| **Hackathon single-node AXL** | Infra + app + `yarn local:axl:single` (or `yarn local:axl:single:nodes` + `yarn workspace @factum/api dev:axl-unified`) | One Go node + unified TS worker + Redis reply path. Narrative: [hackathon-axl-single-node.md](./docs/hackathon-axl-single-node.md). |
+| **Hackathon single-node AXL** | Infra + app + `yarn local:axl:single` (or `yarn local:axl:single:nodes` + `yarn workspace @factuam/api dev:axl-unified`) | One Go node + unified TS worker + Redis reply path. Narrative: [hackathon-axl-single-node.md](./docs/hackathon-axl-single-node.md). |
 
 **Env reference:** [docs/ENVIRONMENT_VARIABLES.md](./docs/ENVIRONMENT_VARIABLES.md).
 
 ### After local testing: run “real” Gensyn AXL
 
-When you are done with **in-process** agents (`FACTUM_MODE=dev`, `GENSYN_AXL_ENABLED=false`), switch to the mesh-backed profile:
+When you are done with **in-process** agents (`factuam_MODE=dev`, `GENSYN_AXL_ENABLED=false`), switch to the mesh-backed profile:
 
-1. Set **`FACTUM_MODE=gensyn`**, **`GENSYN_AXL_ENABLED=true`**, and **`GENSYN_AXL_LOCAL_FALLBACK=false`** when you must not fall back to local handlers.
+1. Set **`factuam_MODE=gensyn`**, **`GENSYN_AXL_ENABLED=true`**, and **`GENSYN_AXL_LOCAL_FALLBACK=false`** when you must not fall back to local handlers.
 2. Start the **Go bridge + TS workers** using either **`yarn local:axl`** (full local mesh) or **`yarn local:axl:single`** (one Go node + unified worker + Redis). Restart **`yarn api` / `yarn dev`** after `.env.local.axl` is written.
 3. Point **`GENSYN_AXL_API_URL`** at the orchestrator node (local default `http://127.0.0.1:9002`). Ensure **`AXL_PEER_*`** or **`AXL_SINGLE_PEER_ID`** match **`our_public_key`** from `/topology` as documented in [docs/nodes-runbook.md](./docs/nodes-runbook.md).
 4. For flaky links or slow hosts, raise **`GENSYN_AXL_TIMEOUT_MS`** and **`REPLY_TIMEOUT_MS`** (single-node).
@@ -203,7 +203,7 @@ docker compose up -d postgres redis
 
 ## 5. Start OpenCode (required for JSON agents)
 
-Experiments use **OpenCode** for structured JSON outputs from specialist agents. Install the OpenCode CLI from the [OpenCode docs](https://opencode.ai/docs/), configure **provider credentials** there (for example via `opencode.json` or OpenCode’s auth UI — not in Factum’s `.env`), then run a standalone server:
+Experiments use **OpenCode** for structured JSON outputs from specialist agents. Install the OpenCode CLI from the [OpenCode docs](https://opencode.ai/docs/), configure **provider credentials** there (for example via `opencode.json` or OpenCode’s auth UI — not in factuam’s `.env`), then run a standalone server:
 
 ```bash
 opencode serve --hostname 127.0.0.1 --port 4096
@@ -309,9 +309,9 @@ http://localhost:3000
 
 ```bash
 yarn typecheck                      # all workspaces
-yarn workspace @factum/api typecheck
-yarn workspace @factum/agent-sdk typecheck
-yarn workspace @factum/shared-types build
+yarn workspace @factuam/api typecheck
+yarn workspace @factuam/agent-sdk typecheck
+yarn workspace @factuam/shared-types build
 yarn check                          # typecheck + test
 ```
 
@@ -337,7 +337,7 @@ yarn check                          # typecheck + test
 ## LLM
 
 - `OPENCODE_BASE_URL` (OpenCode server; default `http://127.0.0.1:4096`)
-- `OPENCODE_MODEL` — use a `provider/model` pair that your **OpenCode** install lists (see `GET /config/providers` on the OpenCode server, or the OpenCode UI). The default in `vars` / config may not match your server’s registry; wrong values cause `ProviderModelNotFoundError` in `opencode serve`. Provider credentials stay in OpenCode, not Factum.
+- `OPENCODE_MODEL` — use a `provider/model` pair that your **OpenCode** install lists (see `GET /config/providers` on the OpenCode server, or the OpenCode UI). The default in `vars` / config may not match your server’s registry; wrong values cause `ProviderModelNotFoundError` in `opencode serve`. Provider credentials stay in OpenCode, not factuam.
 - `LLM_MODEL` (default for Gensyn REE when `GENSYN_REE_VERIFIER_MODEL` is unset)
 
 Direct OpenAI usage has been removed from the API; structured agent calls go through [OpenCode](https://opencode.ai/docs/sdk/).
@@ -350,7 +350,7 @@ Direct OpenAI usage has been removed from the API; structured agent calls go thr
 
 ## Gensyn AXL
 
-- `FACTUM_MODE`
+- `factuam_MODE`
 - `GENSYN_AXL_ENABLED`
 - `GENSYN_AXL_API_URL`
 - `GENSYN_AXL_LOCAL_FALLBACK`
@@ -417,7 +417,7 @@ Mode profiles and per-run checklists: [docs/nodes-runbook.md](./docs/nodes-runbo
 Use this when you want the app working even if AXL peers are not configured:
 
 ```bash
-FACTUM_MODE=dev
+factuam_MODE=dev
 GENSYN_AXL_ENABLED=false
 GENSYN_AXL_LOCAL_FALLBACK=true
 GENSYN_REE_ENABLED=false
@@ -428,7 +428,7 @@ GENSYN_REE_ENABLED=false
 Use this for hackathon/demo compliance:
 
 ```bash
-FACTUM_MODE=gensyn
+factuam_MODE=gensyn
 GENSYN_AXL_ENABLED=true
 GENSYN_AXL_LOCAL_FALLBACK=false
 GENSYN_REE_ENABLED=true
@@ -492,10 +492,10 @@ yarn check   # typecheck + test (handy pre-push gate)
 **Targeted:**
 
 ```bash
-yarn workspace @factum/api test                                      # all Vitest suites under apps/api
-yarn workspace @factum/api test test/connectors-contract.test.ts    # connector HTTP contract only
-yarn workspace @factum/ml-runner test                                # Python tests for ML worker
-yarn workspace @factum/proof-receipts test                           # Vitest (proof receipts package)
+yarn workspace @factuam/api test                                      # all Vitest suites under apps/api
+yarn workspace @factuam/api test test/connectors-contract.test.ts    # connector HTTP contract only
+yarn workspace @factuam/ml-runner test                                # Python tests for ML worker
+yarn workspace @factuam/proof-receipts test                           # Vitest (proof receipts package)
 ```
 
 **Connectors:** smoke script and manifest/run contract are documented in [connectors/README.md](./connectors/README.md).
@@ -530,7 +530,7 @@ Usually one of these:
 ## Gensyn mode fails fast
 
 Usually one of these:
-- `FACTUM_MODE=gensyn` but one or more `AXL_PEER_*` vars are missing
+- `factuam_MODE=gensyn` but one or more `AXL_PEER_*` vars are missing
 - `GENSYN_AXL_ENABLED` is false
 - AXL API is not reachable at `GENSYN_AXL_API_URL`
 - AXL workers are not running

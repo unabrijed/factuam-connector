@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import type { ArtifactManifestEntry } from "@factum/shared-types";
+import type { ArtifactManifestEntry } from "@factuam/shared-types";
 import { db } from "../db/client";
 import { artifacts } from "../db/schema";
 

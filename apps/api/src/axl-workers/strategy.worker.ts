@@ -1,4 +1,4 @@
-import { AxlTransportClient } from "@factum/gensyn-axl";
+import { AxlTransportClient } from "@factuam/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
@@ -6,19 +6,19 @@ import {
   markAxlWorkerProcessing,
   markAxlWorkerStarted
 } from "../services/axl-worker-health.service";
-import { StrategyService } from "../services/strategy.service";
+import { StrategyAgentService } from "../services/agents/strategy-agent.service";
 import { runAxlRecvLoop } from "./axl-recv-runner";
 
 type StrategyRequestEnvelope = {
   correlationId?: string;
   agent?: string;
-  payload?: Parameters<StrategyService["decide"]>[0];
+  payload?: Parameters<StrategyAgentService["run"]>[0];
   sentAt?: string;
 };
 
 async function main() {
   const client = new AxlTransportClient({ apiBaseUrl: config.GENSYN_AXL_API_URL });
-  const service = new StrategyService();
+  const service = new StrategyAgentService();
 
   await markAxlWorkerStarted({
     worker: "strategy-agent",
@@ -42,16 +42,16 @@ async function main() {
     logTag: "axl_strategy_worker",
     handleMessages: async (messages) => {
       for (const message of messages) {
-        if (message.topic !== "factum.strategy_agent") continue;
+        if (message.topic !== "factuam.strategy_agent") continue;
         const data = message.data as StrategyRequestEnvelope;
         await markAxlWorkerProcessing("strategy-agent");
         if (!message.from || !data.correlationId || !data.payload) continue;
 
-        const result = service.decide(data.payload);
+        const result = await service.run(data.payload);
 
         await client.send({
           to: message.from,
-          topic: "factum.strategy_agent.result",
+          topic: "factuam.strategy_agent.result",
           payload: {
             correlationId: data.correlationId,
             result

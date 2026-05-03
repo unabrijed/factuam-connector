@@ -41,7 +41,7 @@ export class OpencodeJsonAgentService {
     const dirOpts = config.OPENCODE_DIRECTORY ? { directory: config.OPENCODE_DIRECTORY } : {};
 
     const created = await api.session.create({
-      title: "factum-json-agent",
+      title: "factuam-json-agent",
       ...dirOpts
     });
 

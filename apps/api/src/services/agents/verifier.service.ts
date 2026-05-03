@@ -1,10 +1,10 @@
-import type { ReeVerification, VerifierResult } from "@factum/shared-types";
-import { VerifierResultSchema } from "@factum/shared-types";
+import type { ReeVerification, VerifierResult } from "@factuam/shared-types";
+import { VerifierResultSchema } from "@factuam/shared-types";
 import { config } from "../../config";
 import { GensynReeService } from "../gensyn-ree.service";
 import { OpencodeJsonAgentService } from "../opencode-json-agent.service";
 
-const systemPrompt = `You are the Factum verifier.
+const systemPrompt = `You are the factuam verifier.
 Return JSON only.
 Be conservative.
 Reject unsupported claims.

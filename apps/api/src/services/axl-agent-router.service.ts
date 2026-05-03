@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { getMode, isDevMode } from "@factum/agent-sdk";
-import type { AgentTraceEntry } from "@factum/shared-types";
-import type { AxlMessageEnvelope } from "@factum/gensyn-axl";
-import { AxlTransportClient } from "@factum/gensyn-axl";
+import { getMode, isDevMode } from "@factuam/agent-sdk";
+import type { AgentTraceEntry } from "@factuam/shared-types";
+import type { AxlMessageEnvelope } from "@factuam/gensyn-axl";
+import { AxlTransportClient } from "@factuam/gensyn-axl";
 import { config } from "../config";
 import { axlReplyBroker } from "./axl-reply-broker.service";
 
@@ -102,7 +102,7 @@ export class AxlAgentRouterService {
     }
 
     if ((!config.GENSYN_AXL_ENABLED || !peerId) && mode === "gensyn") {
-      throw new Error(`AXL peer is required for ${input.agent} when FACTUM_MODE=gensyn`);
+      throw new Error(`AXL peer is required for ${input.agent} when factuam_MODE=gensyn`);
     }
 
     const resolvedPeerId = peerId as string;
@@ -111,7 +111,7 @@ export class AxlAgentRouterService {
     try {
       await this.client.send({
         to: resolvedPeerId,
-        topic: `factum.${input.agent}`,
+        topic: `factuam.${input.agent}`,
         payload: {
           correlationId,
           agent: input.agent,

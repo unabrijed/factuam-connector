@@ -36,7 +36,7 @@ describe("hash helpers", () => {
           axlPeerId: "peer_verifier",
           reeVerification: {
             provider: "gensyn_ree",
-            model: "factum-verifier-v1",
+            model: "factuam-verifier-v1",
             receiptHash: "0xree",
             verified: true
           }
@@ -44,7 +44,7 @@ describe("hash helpers", () => {
       ],
       reeVerification: {
         provider: "gensyn_ree",
-        model: "factum-verifier-v1",
+        model: "factuam-verifier-v1",
         receiptHash: "0xree",
         verified: true
       },
@@ -53,7 +53,7 @@ describe("hash helpers", () => {
         txHash: "0xtx",
         contractAddress: "0xcontract",
         blockNumber: 12,
-        verifyUrl: "https://factum.run/verify/exp_123"
+        verifyUrl: "https://factuam.run/verify/exp_123"
       }
     });
 

@@ -1,8 +1,8 @@
 /**
- * @factum/agent-connectors — Agent-facing capability definitions (tools + bindings).
+ * @factuam/agent-connectors — Agent-facing capability definitions (tools + bindings).
  *
  * Relationship to other packages:
- * - `@factum/connector-sdk`: runtime interface for **dataset import** (artifacts + hashes).
+ * - `@factuam/connector-sdk`: runtime interface for **dataset import** (artifacts + hashes).
  * - This package: **what the agent is allowed to request** (typed inputs, titles, wiring hints).
  *
  * Next integration loop: register `allCapabilityTools` with the orchestrator or JSON-agent tool

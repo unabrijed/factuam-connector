@@ -1,4 +1,4 @@
-import { ExperimentPlanSchema, type ExperimentPlan } from "@factum/shared-types";
+import { ExperimentPlanSchema, type ExperimentPlan } from "@factuam/shared-types";
 import { OpencodeJsonAgentService } from "../opencode-json-agent.service";
 
 function extractSchemaColumns(datasetSchema: unknown): string[] {
@@ -8,54 +8,6 @@ function extractSchemaColumns(datasetSchema: unknown): string[] {
         .filter((name): name is string => typeof name === "string" && name.length > 0)
     : [];
   return columns;
-}
-
-function buildWineValuePlan(input: { query: string; datasetSchema: unknown }): ExperimentPlan | null {
-  const columns = new Set(extractSchemaColumns(input.datasetSchema).map((column) => column.toLowerCase()));
-  const hasWineShape =
-    columns.has("points") &&
-    columns.has("price") &&
-    columns.has("country") &&
-    columns.has("variety");
-
-  const query = input.query.toLowerCase();
-  const looksLikeValueQuery =
-    query.includes("value") ||
-    query.includes("price") ||
-    query.includes("points") ||
-    query.includes("country-variety") ||
-    query.includes("country and variety");
-
-  if (!hasWineShape || !looksLikeValueQuery) {
-    return null;
-  }
-
-  return {
-    objective:
-      "Predict wine review points from price and product/location attributes, then use the fitted signal to identify country-variety segments with strong quality relative to price.",
-    taskType: "regression",
-    targetColumn: "points",
-    requiredColumns: ["price", "country", "variety"],
-    optionalColumns: ["province", "region_1", "winery", "designation", "taster_name"].filter((column) => columns.has(column)),
-    candidateModels: ["linear_regression", "random_forest_regressor", "xgboost_regressor"],
-    baselineMethod: "mean_target_baseline",
-    evaluationMetrics: ["rmse", "mae", "r2"],
-    backtestMethod: "random_split",
-    splitConfig: {
-      trainSize: 0.8,
-      testSize: 0.2
-    },
-    successCriteria: {
-      minimumRows: 1000,
-      minimumLiftOverBaseline: 5,
-      minimumMetricValue: 0.1
-    },
-    limitations: [
-      "This dataset is observational review data and does not prove causal drivers of value.",
-      "Price coverage and review behavior may vary across countries and varieties.",
-      "Missing text or sparse categories may reduce segment stability."
-    ]
-  };
 }
 
 function normalizeExperimentPlanShape(input: unknown): unknown {
@@ -83,18 +35,14 @@ function normalizeExperimentPlanShape(input: unknown): unknown {
 
   return {
     objective: source.objective ?? source.notes ?? "Build a realistic tabular ML plan for the query using the available dataset schema.",
-    taskType:
-      source.taskType ??
-      (typeof source.targetColumn === "string" && source.targetColumn.toLowerCase().includes("point")
-        ? "regression"
-        : "regression"),
+    taskType: source.taskType ?? "regression",
     targetColumn: source.targetColumn,
     requiredColumns: Array.isArray(source.requiredColumns) ? source.requiredColumns : [],
     optionalColumns: Array.isArray(source.optionalColumns) ? source.optionalColumns : [],
     candidateModels: source.candidateModels,
     baselineMethod: source.baselineMethod,
     evaluationMetrics: source.evaluationMetrics,
-    backtestMethod: source.backtestMethod ?? source.dataSplittingMethod,
+    backtestMethod: source.backtestMethod ?? source.dataSplittingMethod ?? "random_split",
     splitConfig:
       source.splitConfig && typeof source.splitConfig === "object"
         ? source.splitConfig
@@ -110,7 +58,7 @@ function normalizeExperimentPlanShape(input: unknown): unknown {
   };
 }
 
-const systemPrompt = `You are the Factum experiment planner.
+const systemPrompt = `You are the factuam experiment planner.
 Return JSON only.
 Return a single top-level object with exactly these keys:
 - objective: string
@@ -128,7 +76,7 @@ Return a single top-level object with exactly these keys:
 Do not wrap the result in an "experimentPlan" key.
 Build a realistic tabular ML/backtesting plan from the query and dataset schema.
 Prefer simple deterministic plans for MVP.
-Choose targetColumn only from available columns.
+Choose targetColumn only from available columns listed in the dataset schema.
 Choose candidateModels from linear_regression, random_forest_regressor, xgboost_regressor, logistic_regression, random_forest_classifier, xgboost_classifier.
 Choose baselineMethod and evaluationMetrics appropriate to taskType.
 Use time_split if a valid date column exists for forecasting or time-oriented queries.
@@ -138,14 +86,12 @@ export class ExperimentPlannerService {
   constructor(private readonly agent = new OpencodeJsonAgentService()) {}
 
   async run(input: { query: string; datasetSchema: unknown }): Promise<ExperimentPlan> {
-    const winePlan = buildWineValuePlan(input);
-    if (winePlan) {
-      return winePlan;
-    }
-
     const raw = await this.agent.run({
       systemPrompt,
-      payload: input,
+      payload: {
+        ...input,
+        availableColumns: extractSchemaColumns(input.datasetSchema)
+      },
       schema: ExperimentPlanSchema.or(ExperimentPlanSchema.passthrough().transform((value) => value))
     });
 

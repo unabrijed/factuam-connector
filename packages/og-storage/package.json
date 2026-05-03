@@ -1,5 +1,5 @@
 {
-  "name": "@factum/og-storage",
+  "name": "@factuam/og-storage",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",

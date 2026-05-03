@@ -1,4 +1,4 @@
-import { AxlTransportClient } from "@factum/gensyn-axl";
+import { AxlTransportClient } from "@factuam/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
@@ -44,7 +44,7 @@ async function main() {
     logTag: "axl_answer_generator_worker",
     handleMessages: async (messages) => {
       for (const message of messages) {
-        if (message.topic !== "factum.answer_generator") continue;
+        if (message.topic !== "factuam.answer_generator") continue;
         const data = message.data as RequestEnvelope;
         await markAxlWorkerProcessing("answer-generator");
         if (!message.from || !data.correlationId) continue;
@@ -53,7 +53,7 @@ async function main() {
 
         await client.send({
           to: message.from,
-          topic: "factum.answer_generator.result",
+          topic: "factuam.answer_generator.result",
           payload: {
             correlationId: data.correlationId,
             result

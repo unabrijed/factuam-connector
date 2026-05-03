@@ -885,7 +885,7 @@ export declare const AgentTraceEntrySchema: z.ZodObject<{
 export type AgentTraceEntry = z.infer<typeof AgentTraceEntrySchema>;
 export declare const ProofReceiptSchema: z.ZodObject<{
     version: z.ZodString;
-    project: z.ZodEnum<["Factum", "ProofLayer"]>;
+    project: z.ZodEnum<["factuam", "ProofLayer"]>;
     experimentId: z.ZodString;
     executionMode: z.ZodOptional<z.ZodEnum<["upload", "connector"]>>;
     queryHash: z.ZodString;
@@ -1105,7 +1105,7 @@ export declare const ProofReceiptSchema: z.ZodObject<{
     };
     verificationStatus: "verified" | "rejected" | "warning";
     version: string;
-    project: "Factum" | "ProofLayer";
+    project: "factuam" | "ProofLayer";
     queryHash: string;
     datasetHash: string;
     experimentConfigHash: string;
@@ -1183,7 +1183,7 @@ export declare const ProofReceiptSchema: z.ZodObject<{
     };
     verificationStatus: "verified" | "rejected" | "warning";
     version: string;
-    project: "Factum" | "ProofLayer";
+    project: "factuam" | "ProofLayer";
     queryHash: string;
     datasetHash: string;
     experimentConfigHash: string;

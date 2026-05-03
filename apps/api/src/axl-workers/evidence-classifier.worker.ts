@@ -1,4 +1,4 @@
-import { AxlTransportClient } from "@factum/gensyn-axl";
+import { AxlTransportClient } from "@factuam/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
@@ -47,7 +47,7 @@ async function main() {
     logTag: "axl_evidence_classifier_worker",
     handleMessages: async (messages) => {
       for (const message of messages) {
-        if (message.topic !== "factum.evidence_classifier") continue;
+        if (message.topic !== "factuam.evidence_classifier") continue;
         const data = message.data as RequestEnvelope;
         await markAxlWorkerProcessing("evidence-classifier");
         if (!message.from || !data.correlationId || !data.payload) continue;
@@ -56,7 +56,7 @@ async function main() {
 
         await client.send({
           to: message.from,
-          topic: "factum.evidence_classifier.result",
+          topic: "factuam.evidence_classifier.result",
           payload: {
             correlationId: data.correlationId,
             result

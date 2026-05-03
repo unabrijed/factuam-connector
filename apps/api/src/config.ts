@@ -14,7 +14,7 @@ dotenv.config({ path: path.join(apiRoot, ".env"), override: true });
 dotenv.config({ path: path.join(repoRoot, ".env.local.axl"), override: true });
 
 const envSchema = z.object({
-  FACTUM_MODE: z.enum(["gensyn", "dev"]).default("gensyn"),
+  factuam_MODE: z.enum(["gensyn", "dev"]).default("gensyn"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().default(4000),
   APP_URL: z.string().default("http://localhost:3000"),
@@ -99,7 +99,7 @@ const envSchema = z.object({
 });
 
 export const config = envSchema.parse({
-  FACTUM_MODE: process.env.FACTUM_MODE,
+  factuam_MODE: process.env.factuam_MODE,
   NODE_ENV: process.env.NODE_ENV,
   PORT: process.env.PORT,
   APP_URL: process.env.APP_URL,
@@ -149,7 +149,7 @@ export const config = envSchema.parse({
   GENSYN_CHAIN_RPC: process.env.GENSYN_CHAIN_RPC ?? process.env.GENSYN_RPC_URL,
   GENSYN_CHAIN_ID: process.env.GENSYN_CHAIN_ID?.trim() || undefined,
   GENSYN_CHAIN_PRIVATE_KEY: process.env.GENSYN_CHAIN_PRIVATE_KEY,
-  GENSYN_CHAIN_REGISTRY_ADDRESS: process.env.GENSYN_CHAIN_REGISTRY_ADDRESS ?? process.env.FACTUM_REGISTRY_CONTRACT,
+  GENSYN_CHAIN_REGISTRY_ADDRESS: process.env.GENSYN_CHAIN_REGISTRY_ADDRESS ?? process.env.factuam_REGISTRY_CONTRACT,
   KAGGLE_API_TOKEN: process.env.KAGGLE_API_TOKEN,
   KAGGLE_PYTHON_BIN: process.env.KAGGLE_PYTHON_BIN,
   OG_STORAGE_RPC: process.env.OG_STORAGE_RPC,

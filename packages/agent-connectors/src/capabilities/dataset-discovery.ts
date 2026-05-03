@@ -7,7 +7,7 @@ const KaggleSearchInputSchema = z.object({
 });
 
 /**
- * Kaggle search is not yet exposed as a first-class API in Factum; this tool defines the
+ * Kaggle search is not yet exposed as a first-class API in factuam; this tool defines the
  * contract for a future connector or Kaggle API proxy so the agent can discover datasets
  * before calling `dataset.import_kaggle`.
  */

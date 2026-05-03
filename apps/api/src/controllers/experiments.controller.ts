@@ -1,4 +1,4 @@
-import type { CreateExperimentInput } from "@factum/shared-types";
+import type { CreateExperimentInput } from "@factuam/shared-types";
 import { ExperimentService } from "../services/experiment.service";
 import { enqueueExperiment } from "../jobs/queue";
 import { ConnectorAcquisitionService } from "../services/connector-acquisition.service";

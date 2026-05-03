@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import { createHash } from "node:crypto";
-import type { DataQualityReport, ExperimentPlan } from "@factum/shared-types";
-import type { ValidateResult } from "@factum/agent-sdk";
+import type { DataQualityReport, ExperimentPlan } from "@factuam/shared-types";
+import type { ValidateResult } from "@factuam/agent-sdk";
 import { MlWorkerService } from "./ml-worker.service";
 
 export type ValidationServiceInput = {

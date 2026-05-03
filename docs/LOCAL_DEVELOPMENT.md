@@ -41,7 +41,7 @@ docker compose up -d postgres redis
 
 ## 2b. Start OpenCode (required for JSON agents)
 
-Install the CLI from [OpenCode](https://opencode.ai/docs/), configure providers (keys live in OpenCode, not Factum `.env`), then in a **dedicated terminal**:
+Install the CLI from [OpenCode](https://opencode.ai/docs/), configure providers (keys live in OpenCode, not factuam `.env`), then in a **dedicated terminal**:
 
 ```bash
 opencode serve --hostname 127.0.0.1 --port 4096
@@ -100,9 +100,9 @@ yarn check   # typecheck + test
 **Often-used targets:**
 
 ```bash
-yarn workspace @factum/api test
-yarn workspace @factum/api test test/connectors-contract.test.ts
-yarn workspace @factum/ml-runner test
+yarn workspace @factuam/api test
+yarn workspace @factuam/api test test/connectors-contract.test.ts
+yarn workspace @factuam/ml-runner test
 ```
 
 Connector HTTP smoke (needs API up): [connectors/README.md](../connectors/README.md#quick-smoke-test).

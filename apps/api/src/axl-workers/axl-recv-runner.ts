@@ -1,5 +1,5 @@
-import type { AxlMessageEnvelope } from "@factum/gensyn-axl";
-import type { AxlTransportClient } from "@factum/gensyn-axl";
+import type { AxlMessageEnvelope } from "@factuam/gensyn-axl";
+import type { AxlTransportClient } from "@factuam/gensyn-axl";
 import { log, logError } from "../lib/logger";
 import { markAxlWorkerError, markAxlWorkerIdle } from "../services/axl-worker-health.service";
 import type { AxlWorkerName } from "../services/axl-worker-health.service";

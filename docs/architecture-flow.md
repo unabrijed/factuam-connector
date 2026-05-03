@@ -1,4 +1,4 @@
-# Factum architecture flow
+# factuam architecture flow
 
 This document is a **readable map** of how the stack fits together: **who decides and routes** (management), **what runs in order** (structure), **where Gensyn shows up**, and **where 0G (“OG”) shows up**.
 
@@ -12,7 +12,7 @@ For local bring-up and env profiles, see [nodes-runbook.md](./nodes-runbook.md).
 
 | Layer | Role | Main code / config |
 |--------|------|---------------------|
-| **Management** | Job lifecycle, strictness, transport choice, progress to UI, DB | `AgentOrchestratorService`, Bull worker (`jobs/queue.ts`), `AxlAgentRouterService`, `FACTUM_MODE`, `GENSYN_AXL_*`, `AXL_PEER_*` |
+| **Management** | Job lifecycle, strictness, transport choice, progress to UI, DB | `AgentOrchestratorService`, Bull worker (`jobs/queue.ts`), `AxlAgentRouterService`, `factuam_MODE`, `GENSYN_AXL_*`, `AXL_PEER_*` |
 | **Structure** | Ordered specialist steps, payloads, ML artifacts, receipt fields | `runExperiment()` sequence in `agent-orchestrator.service.ts`, `ProofService.createReceipt()` |
 
 **Management** answers: *when* does an agent run, *local vs AXL*, and *what happens on timeout / missing peers*.  
@@ -43,7 +43,7 @@ flowchart TB
     W([Experiment worker])
     ORCH([AgentOrchestratorService.runExperiment])
     ROUTER([AxlAgentRouterService.invoke])
-    MODE{{FACTUM_MODE · GENSYN_AXL · peers}}
+    MODE{{factuam_MODE · GENSYN_AXL · peers}}
     WEB --> API -->|enqueueExperiment| Q --> W --> ORCH --> ROUTER
     ROUTER --> MODE
     MODE -->|dev · AXL off or no peer| LOCAL[localHandler · in-process TS]
@@ -93,7 +93,7 @@ flowchart TB
 
 **Notes**
 
-- Every boxed specialist goes through **`axlRouter.invoke`**: same *structure*, but **transport** is either **in-process** (`localHandler`) or **AXL** to a worker peer (topic `factum.<agent>`).
+- Every boxed specialist goes through **`axlRouter.invoke`**: same *structure*, but **transport** is either **in-process** (`localHandler`) or **AXL** to a worker peer (topic `factuam.<agent>`).
 - **`training_agent`** is structural routing to the same invoke pattern; the **heavy compute** is typically the ML worker when running locally (`MlWorkerService.runExperiment`).
 
 ---
@@ -186,7 +186,7 @@ flowchart TB
 | Gensyn piece | Purpose |
 |--------------|---------|
 | **AXL** | Route specialist work to **remote peers** over the Go node (`/send` / `/recv`), using **Ed25519 peer IDs** from env. |
-| **REE** (`@factum/gensyn-ree`) | When enabled, run **verifier**-style checks via **`gensyn-sdk`** with receipts; optional **OpenCode** fallback inside `VerifierService`. |
+| **REE** (`@factuam/gensyn-ree`) | When enabled, run **verifier**-style checks via **`gensyn-sdk`** with receipts; optional **OpenCode** fallback inside `VerifierService`. |
 | **Gensyn chain** | When `GENSYN_CHAIN_ENABLED` and keys/registry are valid, **anchor** experiment hashes on **Gensyn L1** before considering 0G. |
 
 ---

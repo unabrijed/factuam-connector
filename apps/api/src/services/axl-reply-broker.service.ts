@@ -5,7 +5,7 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const KEY_PREFIX = "factum:axl:reply:";
+const KEY_PREFIX = "factuam:axl:reply:";
 
 /**
  * Correlates AXL agent replies when using single-node mode: the unified worker publishes here;

@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 import { MarketingNav } from "../../components/marketing/marketing-nav";
 
 export const metadata = {
-  title: "Factum — AI agents should prove what they tested",
+  title: "factuam — AI agents should prove what they tested",
   description:
-    "Factum turns prompts into evidence plans, runs experiments and backtests, and returns verified answers with proof receipts."
+    "factuam turns prompts into evidence plans, runs experiments and backtests, and returns verified answers with proof receipts."
 };
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {

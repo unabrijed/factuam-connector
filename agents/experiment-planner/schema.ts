@@ -1,1 +1,1 @@
-export { ExperimentPlanSchema } from "@factum/shared-types";
+export { ExperimentPlanSchema } from "@factuam/shared-types";

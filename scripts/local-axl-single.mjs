@@ -204,7 +204,7 @@ async function main() {
   };
 
   if (!nodesOnly) {
-    const child = spawn("yarn", ["workspace", "@factum/api", "dev:axl-unified"], {
+    const child = spawn("yarn", ["workspace", "@factuam/api", "dev:axl-unified"], {
       stdio: "inherit",
       env: sharedEnv,
       cwd: repoRoot

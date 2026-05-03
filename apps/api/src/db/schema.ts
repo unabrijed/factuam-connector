@@ -1,6 +1,6 @@
 import { relations } from "drizzle-orm";
 import { boolean, integer, jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import type { ExperimentPlan, ProofReceipt } from "@factum/shared-types";
+import type { ExperimentPlan, ProofReceipt } from "@factuam/shared-types";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey(),

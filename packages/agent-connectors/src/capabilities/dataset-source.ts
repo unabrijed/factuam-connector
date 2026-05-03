@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { KaggleConnectorParamsSchema, UrlCsvConnectorParamsSchema } from "@factum/shared-types";
+import { KaggleConnectorParamsSchema, UrlCsvConnectorParamsSchema } from "@factuam/shared-types";
 import type { AgentToolDefinition } from "../tool-definition";
 
 const KaggleImportInputSchema = z.object({

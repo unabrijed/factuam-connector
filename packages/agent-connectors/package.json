@@ -1,5 +1,5 @@
 {
-  "name": "@factum/agent-connectors",
+  "name": "@factuam/agent-connectors",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
@@ -10,7 +10,7 @@
     "test": "echo \"No tests in agent-connectors\""
   },
   "dependencies": {
-    "@factum/shared-types": "*",
+    "@factuam/shared-types": "*",
     "zod": "^3.23.8"
   }
 }

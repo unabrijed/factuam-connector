@@ -1,4 +1,4 @@
-import type { ConnectorProvider } from "@factum/shared-types";
+import type { ConnectorProvider } from "@factuam/shared-types";
 
 /**
  * Where a capability is implemented today (API service / worker) or marked planned.
