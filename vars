@@ -34,9 +34,16 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/factum
 REDIS_URL=redis://localhost:6379
 
 # ------------------------------------------------------------------------------
-# OpenAI / LLM
+# OpenCode (JSON agents) — run OpenCode server separately; provider keys live there.
+# https://opencode.ai/docs/sdk/
 # ------------------------------------------------------------------------------
-OPENAI_API_KEY=sk-your-openai-key
+OPENCODE_BASE_URL=http://127.0.0.1:4096
+OPENCODE_MODEL=opencode/gpt-5-nano
+# OPENCODE_DIRECTORY=
+
+# ------------------------------------------------------------------------------
+# Gensyn REE default verifier model (when GENSYN_REE_VERIFIER_MODEL is unset)
+# ------------------------------------------------------------------------------
 LLM_MODEL=gpt-4.1-mini
 
 # ------------------------------------------------------------------------------

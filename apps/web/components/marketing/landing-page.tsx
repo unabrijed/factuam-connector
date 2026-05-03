@@ -3,7 +3,6 @@ import { Faq } from "./faq";
 import { HeroSection } from "./hero-section";
 import { HowItWorks } from "./how-it-works";
 import { MarketingFooter } from "./marketing-footer";
-import { ProofTeaser } from "./proof-teaser";
 
 export function LandingPage() {
   return (
@@ -11,7 +10,6 @@ export function LandingPage() {
       <HeroSection />
       <HowItWorks />
       <FeatureBento />
-      <ProofTeaser />
       <Faq />
       <MarketingFooter />
     </>

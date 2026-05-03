@@ -2,7 +2,7 @@ import type { ReeVerification, VerifierResult } from "@factum/shared-types";
 import { VerifierResultSchema } from "@factum/shared-types";
 import { config } from "../../config";
 import { GensynReeService } from "../gensyn-ree.service";
-import { OpenAiJsonAgentService } from "../openai-json-agent.service";
+import { OpencodeJsonAgentService } from "../opencode-json-agent.service";
 
 const systemPrompt = `You are the Factum verifier.
 Return JSON only.
@@ -15,7 +15,7 @@ Disallowed claims must include certainty language and unsupported guarantees.`;
 
 export class VerifierService {
   constructor(
-    private readonly agent = new OpenAiJsonAgentService(),
+    private readonly agent = new OpencodeJsonAgentService(),
     private readonly reeService = new GensynReeService()
   ) {}
 
@@ -24,7 +24,7 @@ export class VerifierService {
       try {
         return await this.reeService.runVerification(input);
       } catch (error) {
-        console.warn("GENSYN_REE verifier path failed; falling back to OpenAI verifier", error);
+        console.warn("GENSYN_REE verifier path failed; falling back to OpenCode verifier", error);
       }
     }
 

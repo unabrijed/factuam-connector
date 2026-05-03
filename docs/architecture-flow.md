@@ -163,7 +163,7 @@ flowchart TB
   subgraph g_ree [" ② REE — optional verifier run "]
     V([VerifierService.run])
     REE[GensynReeService · gensyn-sdk / ReeClient]
-    OAI[OpenAI JSON · fallback]
+    OAI[OpenCode JSON · fallback]
     V -->|GENSYN_REE_ENABLED| REE
     V -->|else / REE failure| OAI
     class V,REE,OAI ree
@@ -186,7 +186,7 @@ flowchart TB
 | Gensyn piece | Purpose |
 |--------------|---------|
 | **AXL** | Route specialist work to **remote peers** over the Go node (`/send` / `/recv`), using **Ed25519 peer IDs** from env. |
-| **REE** (`@factum/gensyn-ree`) | When enabled, run **verifier**-style checks via **`gensyn-sdk`** with receipts; optional **OpenAI** fallback inside `VerifierService`. |
+| **REE** (`@factum/gensyn-ree`) | When enabled, run **verifier**-style checks via **`gensyn-sdk`** with receipts; optional **OpenCode** fallback inside `VerifierService`. |
 | **Gensyn chain** | When `GENSYN_CHAIN_ENABLED` and keys/registry are valid, **anchor** experiment hashes on **Gensyn L1** before considering 0G. |
 
 ---

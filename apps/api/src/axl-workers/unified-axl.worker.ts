@@ -7,13 +7,12 @@ import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import { axlReplyBroker } from "../services/axl-reply-broker.service";
 import {
-  markAxlWorkerError,
-  markAxlWorkerIdle,
   markAxlWorkerProcessed,
   markAxlWorkerProcessing,
   markAxlWorkerStarted
 } from "../services/axl-worker-health.service";
 import { runAgentByTopic } from "./axl-agent-handlers";
+import { runAxlRecvLoop } from "./axl-recv-runner";
 
 const HANDLED_TOPICS = new Set([
   "factum.evidence_classifier",
@@ -26,10 +25,6 @@ const HANDLED_TOPICS = new Set([
   "factum.verifier",
   "factum.answer_generator"
 ]);
-
-async function sleep(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 async function main() {
   if (!config.GENSYN_AXL_SINGLE_NODE) {
@@ -47,34 +42,34 @@ async function main() {
 
   log("info", "axl_unified_worker_started", {
     apiBaseUrl: config.GENSYN_AXL_API_URL,
-    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER
   });
 
-  while (true) {
-    try {
-      await markAxlWorkerIdle("unified-axl");
-      const messages = await client.recv<{ correlationId?: string; payload?: unknown }>();
-
+  await runAxlRecvLoop({
+    workerKey: "unified-axl",
+    client,
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER,
+    logTag: "axl_unified_worker",
+    handleMessages: async (messages) => {
       for (const message of messages) {
         const topic = message.topic ?? "";
         if (!HANDLED_TOPICS.has(topic)) continue;
         await markAxlWorkerProcessing("unified-axl");
-        if (!message.data?.correlationId) continue;
-        if (topic !== "factum.verifier" && message.data.payload === undefined) continue;
+        const data = message.data as { correlationId?: string; payload?: unknown } | undefined;
+        if (!data?.correlationId) continue;
+        if (topic !== "factum.verifier" && data.payload === undefined) continue;
 
-        const correlationId = message.data.correlationId;
-        const result = await runAgentByTopic(topic, message.data);
+        const correlationId = data.correlationId;
+        const result = await runAgentByTopic(topic, data);
         await axlReplyBroker.publishReply(correlationId, result);
         await markAxlWorkerProcessed("unified-axl");
       }
-    } catch (error) {
-      await markAxlWorkerError("unified-axl", error);
-      logError("axl_unified_worker_error", error);
-      await sleep(Math.max(config.GENSYN_AXL_POLL_INTERVAL_MS, 500));
     }
-
-    await sleep(config.GENSYN_AXL_POLL_INTERVAL_MS);
-  }
+  });
 }
 
 main().catch((error) => {

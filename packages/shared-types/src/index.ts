@@ -447,12 +447,32 @@ export const StrategyDecisionSchema = z.object({
 });
 export type StrategyDecision = z.infer<typeof StrategyDecisionSchema>;
 
-export const CreateExperimentInputSchema = z.object({
-  query: z.string().min(5),
-  mode: z.enum(executionModes).default("upload"),
-  datasetId: z.string().uuid().optional(),
-  connectorRequest: ConnectorRequestSchema.optional()
-});
+export const CreateExperimentInputSchema = z
+  .object({
+    query: z.string().min(5),
+    mode: z.enum(executionModes).default("upload"),
+    datasetId: z.string().uuid().optional(),
+    connectorRequest: ConnectorRequestSchema.optional(),
+    /** When true with mode connector, search Kaggle via HTTP API for a dataset matching `query`, then import. */
+    discoverKaggle: z.boolean().optional()
+  })
+  .superRefine((data, ctx) => {
+    if (data.mode !== "connector") return;
+    const hasConnector = data.connectorRequest != null;
+    const discover = data.discoverKaggle === true;
+    if (!hasConnector && !discover) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Connector mode requires connectorRequest or discoverKaggle: true"
+      });
+    }
+    if (hasConnector && discover) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Pass only one of connectorRequest or discoverKaggle"
+      });
+    }
+  });
 export type CreateExperimentInput = z.infer<typeof CreateExperimentInputSchema>;
 
 export const UploadDatasetResponseSchema = z.object({

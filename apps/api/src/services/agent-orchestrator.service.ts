@@ -25,6 +25,9 @@ import { DiagnosisService } from "./diagnosis.service";
 import { StrategyService } from "./strategy.service";
 import { ReflectionService } from "./reflection.service";
 import { ValidationService } from "./validation.service";
+import { KaggleSuggestService } from "./kaggle-suggest.service";
+import { ConnectorAcquisitionService } from "./connector-acquisition.service";
+import { getDatasetNameFromConnectorRequest } from "../lib/connectors";
 
 function findMissingColumns(plan: ExperimentPlan, datasetSchema: unknown): string[] {
   const columns = Array.isArray((datasetSchema as { columns?: Array<{ name: string }> })?.columns)
@@ -217,7 +220,9 @@ export class AgentOrchestratorService {
     private readonly answerGenerator = new AnswerGeneratorService(),
     private readonly proofService = new ProofService(),
     private readonly connectorRuns = new ConnectorRunService(),
-    private readonly axlRouter = new AxlAgentRouterService()
+    private readonly axlRouter = new AxlAgentRouterService(),
+    private readonly kaggleSuggest = new KaggleSuggestService(),
+    private readonly connectorAcquisition = new ConnectorAcquisitionService()
   ) {}
 
   async runExperiment(experimentId: string) {
@@ -231,8 +236,57 @@ export class AgentOrchestratorService {
       throw new Error(`Experiment ${experimentId} not found`);
     }
     if (!experiment.datasetId) {
-      await this.experiments.fail(experimentId, "REJECTED_INSUFFICIENT_DATA", "An uploaded dataset is required for MVP experiments");
-      return;
+      await this.experiments.appendProgress(experimentId, {
+        stage: "auto_discovering",
+        message: "No dataset provided — searching Kaggle for a matching dataset using your query"
+      });
+
+      let best: Awaited<ReturnType<(typeof this.kaggleSuggest)["pickBestForQuery"]>> = null;
+      try {
+        best = await this.kaggleSuggest.pickBestForQuery(experiment.query);
+      } catch (err) {
+        logError("kaggle_auto_discover_search_failed", err, { experimentId, query: experiment.query });
+      }
+
+      if (!best) {
+        await this.experiments.fail(
+          experimentId,
+          "REJECTED_INSUFFICIENT_DATA",
+          "Couldn't find a matching Kaggle dataset. Try a shorter query (e.g. \"wine quality\") or upload a CSV."
+        );
+        return;
+      }
+
+      await this.experiments.addMessage({
+        experimentId,
+        role: "agent",
+        message: `I'm fetching the Kaggle dataset **"${best.title}"** (${best.ref}), using file: \`${best.selectedFile}\`, to run your analysis on.`,
+        metadata: { autoDiscoveredKaggle: true, datasetRef: best.ref, selectedFile: best.selectedFile, title: best.title }
+      });
+      await this.experiments.appendProgress(experimentId, {
+        stage: "auto_discovered",
+        message: `Auto-discovered Kaggle dataset: ${best.title} (${best.ref})`,
+        details: { datasetRef: best.ref, selectedFile: best.selectedFile, title: best.title }
+      });
+
+      try {
+        const acquisition = await this.connectorAcquisition.acquireDataset({
+          request: best.connectorRequest,
+          datasetName: getDatasetNameFromConnectorRequest(best.connectorRequest)
+        });
+        await this.experiments.attachDataset(experimentId, acquisition.datasetId);
+        experiment.datasetId = acquisition.datasetId;
+        await this.experiments.appendProgress(experimentId, {
+          stage: "auto_discover_acquired",
+          message: `Dataset downloaded and attached: ${best.title}`,
+          details: { datasetId: acquisition.datasetId, runId: acquisition.runId }
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to acquire Kaggle dataset";
+        logError("kaggle_auto_discover_acquire_failed", err, { experimentId, ref: best.ref });
+        await this.experiments.fail(experimentId, "REJECTED_INSUFFICIENT_DATA", message);
+        return;
+      }
     }
 
     const dataset = await this.datasets.getById(experiment.datasetId);

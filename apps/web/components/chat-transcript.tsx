@@ -1,7 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import { Badge, formatLabel } from "./ui";
 
 export type ChatMessage = {
@@ -9,6 +10,7 @@ export type ChatMessage = {
   role: "user" | "agent" | "system";
   message: string;
   createdAt?: string;
+  metadata?: Record<string, unknown> | null;
 };
 
 type ChatTranscriptProps = {
@@ -20,11 +22,6 @@ type ChatTranscriptProps = {
   errorMessage?: string | null;
   statusLabel: string;
   receiptId?: string;
-  /** Shown under the last bubble while run is active */
-  statusLine?: string | null;
-  /** Structured hint (e.g. agent + verifier outcome) when available */
-  statusDetailLine?: string | null;
-  connectorLine?: string | null;
 };
 
 function Bubble({
@@ -40,12 +37,23 @@ function Bubble({
       <div
         className={
           isUser
-            ? "max-w-[min(100%,36rem)] rounded-[22px] bg-[color:rgba(120,210,255,0.18)] px-4 py-3 text-sm leading-7 text-[var(--text)]"
-            : "max-w-[min(100%,40rem)] rounded-[22px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm leading-7 text-[var(--text)]"
+            ? "max-w-[min(100%,36rem)] rounded-[22px] bg-[var(--accent-faint)] px-4 py-3 text-sm leading-7 text-[var(--text)]"
+            : "max-w-[min(100%,40rem)] rounded-[22px] border border-[var(--border)] bg-[var(--bg-soft)] px-4 py-3 text-sm leading-7 text-[var(--text)]"
         }
       >
         {children}
       </div>
+    </div>
+  );
+}
+
+function MessageContent({ text, role }: { text: string; role: string }) {
+  if (role === "user") {
+    return <p className="whitespace-pre-wrap">{text}</p>;
+  }
+  return (
+    <div className="prose-sm">
+      <ReactMarkdown>{text}</ReactMarkdown>
     </div>
   );
 }
@@ -58,34 +66,23 @@ export function ChatTranscript({
   completedOk,
   errorMessage,
   statusLabel,
-  receiptId,
-  statusLine,
-  statusDetailLine,
-  connectorLine
+  receiptId
 }: ChatTranscriptProps) {
   return (
-    <div className="flex flex-col gap-4 pb-4">
+    <div className="flex flex-col gap-3 pb-4">
       <Bubble role="user">
         <p className="whitespace-pre-wrap">{initialQuery || "—"}</p>
       </Bubble>
 
       {messages.map((m) => (
         <Bubble key={m.id} role={m.role === "user" ? "user" : "assistant"}>
-          <div className="mb-1 flex flex-wrap items-center gap-2">
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
             <Badge tone={m.role === "user" ? "accent" : "default"}>{formatLabel(m.role)}</Badge>
             {m.createdAt ? <span className="text-[11px] text-[var(--muted)]">{m.createdAt}</span> : null}
           </div>
-          <p className="whitespace-pre-wrap">{m.message}</p>
+          <MessageContent text={m.message} role={m.role} />
         </Bubble>
       ))}
-
-      {!terminal && (statusLine || statusDetailLine || connectorLine) ? (
-        <div className="pl-1 text-xs text-[var(--muted)]">
-          {statusLine ? <p className="text-[var(--text-soft)]">{statusLine}</p> : null}
-          {statusDetailLine ? <p className="text-[11px] text-[var(--muted)]">{statusDetailLine}</p> : null}
-          {connectorLine ? <p>{connectorLine}</p> : null}
-        </div>
-      ) : null}
 
       {terminal && completedOk && finalAnswer ? (
         <Bubble role="assistant">
@@ -100,7 +97,9 @@ export function ChatTranscript({
               </Link>
             ) : null}
           </div>
-          <pre className="whitespace-pre-wrap font-sans">{finalAnswer}</pre>
+          <div className="prose-sm">
+            <ReactMarkdown>{finalAnswer}</ReactMarkdown>
+          </div>
         </Bubble>
       ) : null}
 

@@ -2,13 +2,12 @@ import { AxlTransportClient } from "@factum/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
-  markAxlWorkerError,
-  markAxlWorkerIdle,
   markAxlWorkerProcessed,
   markAxlWorkerProcessing,
   markAxlWorkerStarted
 } from "../services/axl-worker-health.service";
 import { ValidationService } from "../services/validation.service";
+import { runAxlRecvLoop } from "./axl-recv-runner";
 
 type ValidationRequestEnvelope = {
   correlationId?: string;
@@ -16,10 +15,6 @@ type ValidationRequestEnvelope = {
   payload?: Parameters<ValidationService["validate"]>[0];
   sentAt?: string;
 };
-
-async function sleep(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 async function main() {
   const client = new AxlTransportClient({ apiBaseUrl: config.GENSYN_AXL_API_URL });
@@ -33,40 +28,40 @@ async function main() {
 
   log("info", "axl_validation_worker_started", {
     apiBaseUrl: config.GENSYN_AXL_API_URL,
-    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER
   });
 
-  while (true) {
-    try {
-      await markAxlWorkerIdle("validation-agent");
-      const messages = await client.recv<ValidationRequestEnvelope>();
-
+  await runAxlRecvLoop({
+    workerKey: "validation-agent",
+    client,
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER,
+    logTag: "axl_validation_worker",
+    handleMessages: async (messages) => {
       for (const message of messages) {
         if (message.topic !== "factum.validation_agent") continue;
+        const data = message.data as ValidationRequestEnvelope;
         await markAxlWorkerProcessing("validation-agent");
-        if (!message.from || !message.data?.correlationId || !message.data.payload) continue;
+        if (!message.from || !data.correlationId || !data.payload) continue;
 
-        const result = await service.validate(message.data.payload);
+        const result = await service.validate(data.payload);
 
         await client.send({
           to: message.from,
           topic: "factum.validation_agent.result",
           payload: {
-            correlationId: message.data.correlationId,
+            correlationId: data.correlationId,
             result
           }
         });
 
         await markAxlWorkerProcessed("validation-agent");
       }
-    } catch (error) {
-      await markAxlWorkerError("validation-agent", error);
-      logError("axl_validation_worker_error", error);
-      await sleep(Math.max(config.GENSYN_AXL_POLL_INTERVAL_MS, 500));
     }
-
-    await sleep(config.GENSYN_AXL_POLL_INTERVAL_MS);
-  }
+  });
 }
 
 main().catch((error) => {

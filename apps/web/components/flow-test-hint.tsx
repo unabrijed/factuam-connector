@@ -12,7 +12,7 @@ export function FlowTestHint() {
   const { sampleDataset, presets } = workflowPresetsConfig;
 
   return (
-    <Card className="border-[color:rgba(120,210,255,0.22)] bg-[var(--accent-faint)]">
+    <Card className="border-[color:rgba(0,169,110,0.22)] bg-[var(--accent-faint)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <SectionTitle title="Dev check" subtitle="demo-campaigns.csv → Data → Ask → Run" />
         <Badge tone="accent">dev</Badge>

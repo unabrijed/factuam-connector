@@ -109,6 +109,55 @@ export function HomeShell() {
     }
   }
 
+  async function handleKaggleDiscover(input: { query: string }) {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await createExperiment({
+        query: input.query,
+        mode: "connector",
+        discoverKaggle: true
+      });
+      setExperimentId(result.experimentId);
+      setConnectorRunId(result.connectorRunId ?? null);
+      setPhase("chat");
+      syncExperimentUrl(result.experimentId, result.connectorRunId ?? null);
+      recordRecent({
+        id: result.experimentId,
+        title: input.query.trim(),
+        updatedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to discover Kaggle dataset");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleAutoDiscover(input: { query: string }) {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await createExperiment({
+        query: input.query,
+        mode: "upload"
+      });
+      setExperimentId(result.experimentId);
+      setConnectorRunId(result.connectorRunId ?? null);
+      setPhase("chat");
+      syncExperimentUrl(result.experimentId, result.connectorRunId ?? null);
+      recordRecent({
+        id: result.experimentId,
+        title: input.query.trim(),
+        updatedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create experiment");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleUploadRun(input: { datasetId: string; query: string }) {
     setBusy(true);
     setError(null);
@@ -169,7 +218,7 @@ export function HomeShell() {
 
   return (
     <AppChatShell sidebar={sidebar} onOpenMobileNav={() => setMobileNavOpen(true)}>
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {phase === "chat" && experimentId ? (
           <AppChatThread
             experimentId={experimentId}
@@ -189,6 +238,8 @@ export function HomeShell() {
               error={error}
               busy={busy}
               onPresetSubmit={handlePresetSubmit}
+              onKaggleDiscoverSubmit={handleKaggleDiscover}
+              onAutoDiscoverSubmit={handleAutoDiscover}
               presets={presets}
               connectors={connectors}
             />

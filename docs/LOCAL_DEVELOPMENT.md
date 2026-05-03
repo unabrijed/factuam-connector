@@ -8,12 +8,14 @@ This is the shortest path to a working local app **without** standing up the ful
 - Yarn `1.22+`
 - Python `3.11+`
 - Docker
+- **OpenCode CLI** — for JSON agents ([docs](https://opencode.ai/docs/)); run `opencode serve` while developing (see below)
 
 ## Services
 
 - `apps/web` — frontend on `3000`
 - `apps/api` — API on `4000`
 - `workers/ml-runner` — ML worker on `8000`
+- **OpenCode** — LLM HTTP server for JSON agents on **`4096`** by default (`OPENCODE_BASE_URL`; start with `opencode serve`)
 - Postgres on `5432`
 - Redis on `6379`
 
@@ -37,6 +39,16 @@ yarn db:migrate
 docker compose up -d postgres redis
 ```
 
+## 2b. Start OpenCode (required for JSON agents)
+
+Install the CLI from [OpenCode](https://opencode.ai/docs/), configure providers (keys live in OpenCode, not Factum `.env`), then in a **dedicated terminal**:
+
+```bash
+opencode serve --hostname 127.0.0.1 --port 4096
+```
+
+Keep it running while you use the app. See [Server](https://opencode.ai/docs/server).
+
 ## 3. Set environment variables
 
 Use:
@@ -46,7 +58,7 @@ Use:
 Important:
 
 - the API validates required variables at startup
-- a full experiment run needs working OpenAI and 0G values
+- a full experiment run needs a reachable **OpenCode** server (for JSON agents), configured provider keys in OpenCode, and valid 0G values
 
 ## 4. Start the application
 
@@ -71,6 +83,7 @@ yarn web      # Next.js :3000
 ```bash
 curl http://localhost:4000/health
 curl http://localhost:8000/health
+curl http://127.0.0.1:4096/global/health
 ```
 
 Open `http://localhost:3000`.

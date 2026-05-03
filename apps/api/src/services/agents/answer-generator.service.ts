@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { OpenAiJsonAgentService } from "../openai-json-agent.service";
+import { OpencodeJsonAgentService } from "../opencode-json-agent.service";
 
 const schema = z.object({
   finalAnswer: z.string(),
@@ -35,7 +35,7 @@ Proof Receipt:
 Use only verified claims and warnings. Never invent metrics, hashes, certainty, or guarantees.`;
 
 export class AnswerGeneratorService {
-  constructor(private readonly agent = new OpenAiJsonAgentService()) {}
+  constructor(private readonly agent = new OpencodeJsonAgentService()) {}
 
   async run(input: unknown): Promise<{ finalAnswer: string; resultSummary: Record<string, unknown> }> {
     return this.agent.run({

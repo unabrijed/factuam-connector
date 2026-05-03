@@ -1,12 +1,13 @@
 {
   "worker": "diagnosis-agent",
-  "status": "error",
-  "pid": 83616,
-  "apiBaseUrl": "",
-  "pollIntervalMs": 0,
+  "status": "idle",
+  "pid": 16177,
+  "apiBaseUrl": "http://127.0.0.1:9002",
+  "pollIntervalMs": 250,
   "startedAt": "2026-05-02T20:14:33.701Z",
-  "updatedAt": "2026-05-02T20:15:11.698Z",
-  "processedCount": 0,
+  "updatedAt": "2026-05-03T11:44:08.351Z",
+  "lastProcessedAt": "2026-05-03T08:44:16.013Z",
+  "processedCount": 1,
   "lastErrorAt": "2026-05-02T20:15:11.698Z",
   "lastErrorMessage": "fetch failed"
 }

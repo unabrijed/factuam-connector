@@ -1,34 +1,47 @@
-import { Card, SectionTitle } from "../ui";
-
 const items = [
   {
     q: "How do I run an experiment?",
-    a: "Open Run, pick a connector preset, edit the question if you want, and start the run. When it finishes, open the proof receipt from the run view."
+    a: "Open the Run page, pick a connector preset or type a query to auto-discover a dataset, then start the run. When it finishes, open the proof receipt from the run view."
   },
-  { q: 'What does "verified" mean?', a: "System-assigned status from checks on the run — not legal proof." },
-  { q: "Financial advice?", a: "No. You own decisions and compliance." },
-  { q: "Different from chat?", a: "Built for one question, metrics, and a receipt." }
+  {
+    q: 'What does "verified" mean?',
+    a: "System-assigned status from checks on the run — models were trained, metrics computed, and results matched the plan. Not legal or financial proof."
+  },
+  {
+    q: "Is this financial advice?",
+    a: "No. Factum runs ML experiments and reports results. You own all decisions and compliance responsibilities."
+  },
+  {
+    q: "How is this different from ChatGPT?",
+    a: "Factum runs real ML experiments on datasets with training, backtesting, and verification. It returns metrics, lift scores, and proof receipts — not just text."
+  },
+  {
+    q: "What datasets can I use?",
+    a: "Upload CSVs, use Kaggle public datasets (auto-discovered or via search), or import from URLs. More connectors coming soon."
+  }
 ] as const;
 
 export function Faq() {
   return (
-    <section id="faq" className="scroll-mt-28 pt-16 sm:pt-20">
-      <Card className="space-y-6">
-        <SectionTitle title="FAQ" />
-        <div className="divide-y divide-[var(--border)] rounded-[24px] border border-[var(--border)] bg-[var(--surface)]">
+    <section id="faq" className="scroll-mt-28 pt-24 sm:pt-32">
+      <div className="mx-auto max-w-2xl">
+        <h2 className="text-center text-2xl font-bold tracking-tight text-[var(--text)] sm:text-3xl">
+          FAQ
+        </h2>
+        <div className="mt-12 divide-y divide-[var(--border)] rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
           {items.map((item) => (
-            <details key={item.q} className="group px-4 py-4 sm:px-5">
-              <summary className="cursor-pointer list-none text-left text-sm font-medium text-[var(--text)] marker:content-none [&::-webkit-details-marker]:hidden">
+            <details key={item.q} className="group">
+              <summary className="cursor-pointer list-none px-5 py-4 text-left text-sm font-medium text-[var(--text)] marker:content-none [&::-webkit-details-marker]:hidden">
                 <span className="flex items-center justify-between gap-3">
                   {item.q}
-                  <span className="shrink-0 text-[var(--muted)] transition group-open:rotate-180">▾</span>
+                  <span className="shrink-0 text-sm text-[var(--muted)] transition group-open:rotate-180">▾</span>
                 </span>
               </summary>
-              <p className="mt-3 text-sm leading-6 text-[var(--text-soft)]">{item.a}</p>
+              <p className="px-5 pb-4 text-sm leading-6 text-[var(--text-soft)]">{item.a}</p>
             </details>
           ))}
         </div>
-      </Card>
+      </div>
     </section>
   );
 }

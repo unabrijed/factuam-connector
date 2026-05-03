@@ -6,7 +6,7 @@ import { createContext, ReactNode, useContext, useEffect, useMemo, useState } fr
 type Theme = "dark" | "light";
 
 const ThemeContext = createContext<{ theme: Theme; toggleTheme: () => void }>({
-  theme: "dark",
+  theme: "light",
   toggleTheme: () => undefined
 });
 
@@ -14,7 +14,7 @@ const THEME_STORAGE_KEY = "factum-theme";
 const LEGACY_THEME_STORAGE_KEY = "prooflayer-theme";
 
 function getPreferredTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   const saved =
     window.localStorage.getItem(THEME_STORAGE_KEY) ??
     window.localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
@@ -24,7 +24,7 @@ function getPreferredTheme(): Theme {
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
     setTheme(getPreferredTheme());

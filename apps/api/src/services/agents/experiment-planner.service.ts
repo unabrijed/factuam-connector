@@ -1,5 +1,5 @@
 import { ExperimentPlanSchema, type ExperimentPlan } from "@factum/shared-types";
-import { OpenAiJsonAgentService } from "../openai-json-agent.service";
+import { OpencodeJsonAgentService } from "../opencode-json-agent.service";
 
 function extractSchemaColumns(datasetSchema: unknown): string[] {
   const columns = Array.isArray((datasetSchema as { columns?: Array<{ name?: string }> })?.columns)
@@ -135,7 +135,7 @@ Use time_split if a valid date column exists for forecasting or time-oriented qu
 Success criteria must be conservative and honest.`;
 
 export class ExperimentPlannerService {
-  constructor(private readonly agent = new OpenAiJsonAgentService()) {}
+  constructor(private readonly agent = new OpencodeJsonAgentService()) {}
 
   async run(input: { query: string; datasetSchema: unknown }): Promise<ExperimentPlan> {
     const winePlan = buildWineValuePlan(input);

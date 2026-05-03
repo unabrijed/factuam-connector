@@ -6,9 +6,16 @@ import { ExperimentService } from "../services/experiment.service";
 import { enqueueExperiment } from "../jobs/queue";
 import { connectorPresets } from "../data/connector-presets";
 import { getDatasetNameFromConnectorRequest } from "../lib/connectors";
+import { KaggleSuggestService } from "../services/kaggle-suggest.service";
 
 const connectors = new ConnectorAcquisitionService();
 const experiments = new ExperimentService();
+const kaggleSuggest = new KaggleSuggestService();
+
+const KaggleSuggestBodySchema = z.object({
+  query: z.string().min(1),
+  limit: z.coerce.number().int().min(1).max(25).optional()
+});
 
 const ConnectorImportInputSchema = z.object({
   query: z.string().min(5).optional(),
@@ -63,6 +70,12 @@ export function listConnectorPresetsController() {
 
 export async function getConnectorRunController(runId: string) {
   return connectors.getRun(runId);
+}
+
+export async function kaggleSuggestDatasetsController(input: unknown) {
+  const parsed = KaggleSuggestBodySchema.parse(input);
+  const candidates = await kaggleSuggest.suggestCandidates(parsed.query, parsed.limit ?? 8);
+  return { candidates };
 }
 
 export async function importKaggleDatasetController(input: unknown) {

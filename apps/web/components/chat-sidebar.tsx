@@ -1,7 +1,8 @@
 "use client";
 
 import type { ExperimentRecent } from "../lib/experiment-recents";
-import { formatLabel } from "./ui";
+import { isExperimentTerminal } from "../lib/experiment-query";
+import { formatLabel, ThinkingIndicator } from "./ui";
 
 type ChatSidebarProps = {
   recents: ExperimentRecent[];
@@ -27,8 +28,8 @@ export function ChatSidebar({ recents, activeExperimentId, onSelectRecent, onNew
       <aside
         className={
           open
-            ? "fixed inset-y-0 left-0 z-50 flex w-[min(100%,18rem)] flex-col border-r border-[var(--border)] bg-[var(--surface-elevated)] shadow-xl md:static md:z-0 md:w-64 md:shrink-0 md:rounded-l-[24px] md:border-r md:shadow-none"
-            : "hidden md:flex md:w-64 md:shrink-0 md:flex-col md:rounded-l-[24px] md:border-r md:border-[var(--border)] md:bg-[var(--surface-elevated)]"
+            ? "fixed inset-y-0 left-0 z-50 flex w-[min(100%,18rem)] flex-col border-r border-[var(--border)] bg-[var(--surface-elevated)] shadow-xl md:static md:z-0 md:w-64 md:shrink-0 md:rounded-l-[24px] md:border-r md:shadow-none md:max-h-full"
+            : "hidden md:flex md:w-64 md:shrink-0 md:max-h-full md:flex-col md:rounded-l-[24px] md:border-r md:border-[var(--border)] md:bg-[var(--surface-elevated)]"
         }
       >
         <div className="flex items-center justify-between border-b border-[var(--border)] p-3 md:rounded-tl-[24px]">
@@ -74,9 +75,10 @@ export function ChatSidebar({ recents, activeExperimentId, onSelectRecent, onNew
                       }`}
                     >
                       <span className="line-clamp-2">{r.title || "Untitled run"}</span>
-                      {r.status ? (
-                        <span className="mt-0.5 block text-[10px] text-[var(--muted)]">{formatLabel(r.status)}</span>
-                      ) : null}
+                      <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-[var(--muted)]">
+                        {r.status ? formatLabel(r.status) : null}
+                        {r.status && !isExperimentTerminal(r.status) ? <ThinkingIndicator /> : null}
+                      </span>
                     </button>
                   </li>
                 );

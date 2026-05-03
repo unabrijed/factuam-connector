@@ -2,13 +2,12 @@ import { AxlTransportClient } from "@factum/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
-  markAxlWorkerError,
-  markAxlWorkerIdle,
   markAxlWorkerProcessed,
   markAxlWorkerProcessing,
   markAxlWorkerStarted
 } from "../services/axl-worker-health.service";
 import { EvidenceClassifierService } from "../services/agents/evidence-classifier.service";
+import { runAxlRecvLoop } from "./axl-recv-runner";
 
 type RequestEnvelope = {
   correlationId?: string;
@@ -19,10 +18,6 @@ type RequestEnvelope = {
   };
   sentAt?: string;
 };
-
-async function sleep(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 async function main() {
   const client = new AxlTransportClient({
@@ -38,40 +33,40 @@ async function main() {
 
   log("info", "axl_evidence_classifier_worker_started", {
     apiBaseUrl: config.GENSYN_AXL_API_URL,
-    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER
   });
 
-  while (true) {
-    try {
-      await markAxlWorkerIdle("evidence-classifier");
-      const messages = await client.recv<RequestEnvelope>();
-
+  await runAxlRecvLoop({
+    workerKey: "evidence-classifier",
+    client,
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER,
+    logTag: "axl_evidence_classifier_worker",
+    handleMessages: async (messages) => {
       for (const message of messages) {
         if (message.topic !== "factum.evidence_classifier") continue;
+        const data = message.data as RequestEnvelope;
         await markAxlWorkerProcessing("evidence-classifier");
-        if (!message.from || !message.data?.correlationId || !message.data.payload) continue;
+        if (!message.from || !data.correlationId || !data.payload) continue;
 
-        const result = await service.run(message.data.payload);
+        const result = await service.run(data.payload);
 
         await client.send({
           to: message.from,
           topic: "factum.evidence_classifier.result",
           payload: {
-            correlationId: message.data.correlationId,
+            correlationId: data.correlationId,
             result
           }
         });
 
         await markAxlWorkerProcessed("evidence-classifier");
       }
-    } catch (error) {
-      await markAxlWorkerError("evidence-classifier", error);
-      logError("axl_evidence_classifier_worker_error", error);
-      await sleep(Math.max(config.GENSYN_AXL_POLL_INTERVAL_MS, 500));
     }
-
-    await sleep(config.GENSYN_AXL_POLL_INTERVAL_MS);
-  }
+  });
 }
 
 main().catch((error) => {

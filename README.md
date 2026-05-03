@@ -41,6 +41,7 @@ The app now supports:
 - `apps/web` — Next.js frontend on `http://localhost:3000`
 - `apps/api` — Hono API + experiment orchestrator on `http://localhost:4000`
 - `workers/ml-runner` — FastAPI ML runtime on `http://localhost:8000`
+- **OpenCode** — HTTP server for JSON structured-agent calls (default `http://127.0.0.1:4096`; started separately via `opencode serve`). Factum does not bundle this process.
 - `postgres` — PostgreSQL on `localhost:5432`
 - `redis` — Redis on `localhost:6379`
 
@@ -125,11 +126,23 @@ Users can now message an experiment to:
 
 For a **repeatable run order** (infra, local AXL mesh vs fast dev, production checks) and how **`FACTUM_MODE` relates to Gensyn/AXL**, see [docs/nodes-runbook.md](./docs/nodes-runbook.md). The short path without Gensyn is [docs/LOCAL_DEVELOPMENT.md](./docs/LOCAL_DEVELOPMENT.md).
 
+### Run everything locally (checklist)
+
+Use this order whenever you want the web app, API, ML worker, and agent JSON calls working:
+
+1. **Infrastructure:** `docker compose up -d postgres redis`
+2. **OpenCode:** `opencode serve` on `127.0.0.1:4096` (or match `OPENCODE_BASE_URL`), with providers configured in OpenCode
+3. **Env:** `cp vars .env` (and fill values — see [docs/ENVIRONMENT_VARIABLES.md](./docs/ENVIRONMENT_VARIABLES.md))
+4. **Database:** `yarn db:migrate`
+5. **App:** `yarn dev` (web + API + ML worker)
+
+Verify: [Health / verification commands](#health--verification-commands) below (API, ML worker, OpenCode).
+
 ### How we run the stack (pick one profile)
 
 | Goal | What you start | Notes |
 |------|----------------|-------|
-| **Default app development** | `docker compose up -d postgres redis` → `yarn db:migrate` → `yarn dev` | `yarn dev` runs **web + API + ML worker** in parallel (Turbo). No Go AXL unless you add it. |
+| **Default app development** | `docker compose up -d postgres redis` → **`opencode serve`** → `yarn db:migrate` → `yarn dev` | **`opencode serve`** must run whenever experiments hit JSON agents (classifier, planner, verifier, answer). `yarn dev` runs **web + API + ML worker** (Turbo). No Go AXL unless you add it. |
 | **Fast / no AXL transport** | Same infra + set `FACTUM_MODE=dev`, `GENSYN_AXL_ENABLED=false`, `GENSYN_AXL_LOCAL_FALLBACK=true` | Specialists run **in-process** in the API; good when you are not testing the mesh. |
 | **Full local Gensyn mesh** | Infra + app + `yarn local:axl` **or** `yarn local:axl:nodes` + `yarn dev:axl` | Writes `.env.local.axl`; **restart `yarn api` / `yarn dev`** after it changes. See [nodes-runbook](./docs/nodes-runbook.md). |
 | **Hackathon single-node AXL** | Infra + app + `yarn local:axl:single` (or `yarn local:axl:single:nodes` + `yarn workspace @factum/api dev:axl-unified`) | One Go node + unified TS worker + Redis reply path. Narrative: [hackathon-axl-single-node.md](./docs/hackathon-axl-single-node.md). |
@@ -155,6 +168,7 @@ Install these first:
 - Yarn `1.22+`
 - Python `3.11+`
 - Docker
+- **OpenCode CLI** — required for JSON specialist agents; install from [OpenCode docs](https://opencode.ai/docs/), then run `opencode serve` (see step 5 below)
 
 Optional but useful:
 - `curl`
@@ -187,13 +201,31 @@ So if something seems ignored, check whether `apps/api/.env` overrides it.
 docker compose up -d postgres redis
 ```
 
-## 5. Run DB migrations
+## 5. Start OpenCode (required for JSON agents)
+
+Experiments use **OpenCode** for structured JSON outputs from specialist agents. Install the OpenCode CLI from the [OpenCode docs](https://opencode.ai/docs/), configure **provider credentials** there (for example via `opencode.json` or OpenCode’s auth UI — not in Factum’s `.env`), then run a standalone server:
+
+```bash
+opencode serve --hostname 127.0.0.1 --port 4096
+```
+
+This matches the default **`OPENCODE_BASE_URL`** (`http://127.0.0.1:4096`). Use another port only if you change `OPENCODE_BASE_URL` accordingly.
+
+Confirm the server is up:
+
+```bash
+curl http://127.0.0.1:4096/global/health
+```
+
+More detail: [OpenCode Server](https://opencode.ai/docs/server), [SDK](https://opencode.ai/docs/sdk/).
+
+## 6. Run DB migrations
 
 ```bash
 yarn db:migrate
 ```
 
-## 6. Start the app stack
+## 7. Start the app stack
 
 ### Standard local stack
 
@@ -221,27 +253,32 @@ Or use the **automation** that starts Go `axl/node` processes and workers: `yarn
 
 For a full Gensyn-first local run, you usually want:
 
-### Terminal 1
+### Terminal 1 — infrastructure
 ```bash
 docker compose up -d postgres redis
 ```
 
-### Terminal 2
+### Terminal 2 — OpenCode (keep running)
 ```bash
-yarn worker
+opencode serve --hostname 127.0.0.1 --port 4096
 ```
 
 ### Terminal 3
 ```bash
-yarn api
+yarn worker
 ```
 
 ### Terminal 4
 ```bash
-yarn web
+yarn api
 ```
 
 ### Terminal 5
+```bash
+yarn web
+```
+
+### Terminal 6
 ```bash
 yarn dev:axl
 ```
@@ -255,7 +292,10 @@ yarn dev:axl
 ```bash
 curl http://localhost:4000/health
 curl http://localhost:8000/health
+curl http://127.0.0.1:4096/global/health
 ```
+
+The last command checks **OpenCode** (same URL as `OPENCODE_BASE_URL` + `/global/health`).
 
 ### UI
 
@@ -296,8 +336,11 @@ yarn check                          # typecheck + test
 
 ## LLM
 
-- `OPENAI_API_KEY`
-- `LLM_MODEL`
+- `OPENCODE_BASE_URL` (OpenCode server; default `http://127.0.0.1:4096`)
+- `OPENCODE_MODEL` — use a `provider/model` pair that your **OpenCode** install lists (see `GET /config/providers` on the OpenCode server, or the OpenCode UI). The default in `vars` / config may not match your server’s registry; wrong values cause `ProviderModelNotFoundError` in `opencode serve`. Provider credentials stay in OpenCode, not Factum.
+- `LLM_MODEL` (default for Gensyn REE when `GENSYN_REE_VERIFIER_MODEL` is unset)
+
+Direct OpenAI usage has been removed from the API; structured agent calls go through [OpenCode](https://opencode.ai/docs/sdk/).
 
 ## Local file paths
 
@@ -313,6 +356,8 @@ yarn check                          # typecheck + test
 - `GENSYN_AXL_LOCAL_FALLBACK`
 - `GENSYN_AXL_TIMEOUT_MS`
 - `GENSYN_AXL_POLL_INTERVAL_MS`
+- `GENSYN_AXL_IDLE_POLL_MAX_MS` (cap for exponential backoff when `/recv` is empty)
+- `GENSYN_AXL_RECV_FATAL_AFTER` (consecutive recv failures before worker exits; `0` = disabled)
 - `AXL_PEER_CLASSIFIER`
 - `AXL_PEER_PLANNER`
 - `AXL_PEER_VALIDATION`

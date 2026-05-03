@@ -5,9 +5,7 @@ export function MarketingNav() {
   return (
     <header className="sticky top-6 z-20 flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-[var(--border)] bg-[var(--surface-elevated)]/90 px-5 py-4 shadow-[var(--shadow-soft)] backdrop-blur-xl">
       <Link href="/" className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[var(--border-strong)] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-sm font-semibold text-slate-950 shadow-[0_10px_30px_rgba(87,181,255,0.28)]">
-          FM
-        </div>
+        <img src="/logo.png" alt="Factum" className="h-8 w-auto shrink-0" />
         <div className="text-sm font-medium tracking-[0.22em] text-[var(--muted)] uppercase">Factum</div>
       </Link>
       <nav className="flex flex-wrap items-center gap-2 sm:gap-4" aria-label="Marketing">
@@ -31,7 +29,7 @@ export function MarketingNav() {
         </a>
         <Link
           href="/app"
-          className="inline-flex items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_12px_34px_rgba(87,181,255,0.24)] transition hover:scale-[1.01]"
+          className="inline-flex items-center justify-center rounded-2xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(0,169,110,0.22)] transition hover:scale-[1.01] hover:bg-[var(--accent-strong)]"
         >
           Run an experiment
         </Link>

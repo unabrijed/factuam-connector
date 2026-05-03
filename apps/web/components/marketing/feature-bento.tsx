@@ -1,53 +1,60 @@
-import { Badge, Card, SectionTitle } from "../ui";
-
-const modes = [
-  { title: "Ask mode", description: "Prompt-first workflow; the system frames evidence and depth.", status: "Vision" as const },
-  { title: "Connector mode", description: "Ready presets in Run today; more APIs and webhooks on the roadmap.", status: "Live" as const },
-  { title: "Upload mode", description: "CSV and private datasets as an additional path.", status: "Next" as const }
-];
-
-const ladder = ["Reasoning", "Retrieval", "Stats", "ML", "Trees", "Backtest"];
-
-function statusTone(s: (typeof modes)[number]["status"]) {
-  if (s === "Live") return "success" as const;
-  if (s === "Next") return "accent" as const;
-  return "default" as const;
-}
+const features = [
+  {
+    icon: "◈",
+    title: "Evidence planning",
+    body: "Classifies your query, determines if ML is needed, and builds an experiment plan with target columns and candidate models."
+  },
+  {
+    icon: "⟐",
+    title: "Pipeline execution",
+    body: "Runs classification, validation, diagnosis, training, backtesting, and verification — up to 4 training attempts with reflection."
+  },
+  {
+    icon: "✓",
+    title: "Proof receipts",
+    body: "Generates cryptographic proof receipts with dataset hashes, model artifacts, metrics, and verification status on-chain."
+  },
+  {
+    icon: "⬡",
+    title: "Connector ecosystem",
+    body: "Kaggle datasets, CSV uploads, URL imports. Auto-discovers datasets from prompts when none is provided."
+  },
+  {
+    icon: "✦",
+    title: "AXL / Gensyn ready",
+    body: "Agents can run locally or remotely via AXL mesh transport. ML training delegates to Gensyn worker with live status."
+  },
+  {
+    icon: "◷",
+    title: "Structured output",
+    body: "Every run returns a final answer with confidence score, lift over baseline, and a verifiable receipt — not just text."
+  }
+] as const;
 
 export function FeatureBento() {
   return (
-    <section id="capabilities" className="scroll-mt-28 pt-16 sm:pt-20">
-      <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="space-y-5 xl:col-span-2">
-          <SectionTitle title="Capabilities" />
-          <div className="grid gap-4 sm:grid-cols-3">
-            {modes.map((mode) => (
-              <div key={mode.title} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface-strong)] p-4">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <h3 className="text-base font-semibold text-[var(--text)]">{mode.title}</h3>
-                  <Badge tone={statusTone(mode.status)}>{mode.status}</Badge>
-                </div>
-                <p className="text-sm text-[var(--text-soft)]">{mode.description}</p>
-              </div>
-            ))}
+    <section id="capabilities" className="scroll-mt-28 pt-24 sm:pt-32">
+      <div className="mx-auto max-w-3xl text-center">
+        <h2 className="text-2xl font-bold tracking-tight text-[var(--text)] sm:text-3xl">
+          Capabilities
+        </h2>
+        <p className="mt-3 text-sm text-[var(--text-soft)]">
+          Everything you need to run evidence-backed experiments.
+        </p>
+      </div>
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {features.map((f) => (
+          <div
+            key={f.title}
+            className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 transition hover:border-[var(--accent)]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-faint)] text-base text-[var(--accent)]">
+              {f.icon}
+            </span>
+            <h3 className="mt-3 text-base font-semibold text-[var(--text)]">{f.title}</h3>
+            <p className="mt-1.5 text-sm leading-6 text-[var(--text-soft)]">{f.body}</p>
           </div>
-        </Card>
-        <Card className="space-y-4">
-          <SectionTitle title="Depth" />
-          <ul className="space-y-2">
-            {ladder.map((step, index) => (
-              <li
-                key={step}
-                className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-soft)]"
-              >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent-faint)] text-xs font-semibold text-[var(--text)]">
-                  {index}
-                </span>
-                {step}
-              </li>
-            ))}
-          </ul>
-        </Card>
+        ))}
       </div>
     </section>
   );

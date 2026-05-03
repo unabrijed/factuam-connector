@@ -1,5 +1,5 @@
 import { EvidenceClassifierResultSchema, type EvidenceClassifierResult } from "@factum/shared-types";
-import { OpenAiJsonAgentService } from "../openai-json-agent.service";
+import { OpencodeJsonAgentService } from "../opencode-json-agent.service";
 
 const systemPrompt = `You are the Factum evidence classifier.
 Return JSON only.
@@ -19,7 +19,7 @@ If evidence mode is not required:
 Always include all five keys.`;
 
 export class EvidenceClassifierService {
-  constructor(private readonly agent = new OpenAiJsonAgentService()) {}
+  constructor(private readonly agent = new OpencodeJsonAgentService()) {}
 
   async run(input: { query: string; availableDataset?: unknown }): Promise<EvidenceClassifierResult> {
     return this.agent.run({

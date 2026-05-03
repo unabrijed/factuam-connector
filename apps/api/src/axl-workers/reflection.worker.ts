@@ -1,29 +1,25 @@
 import { AxlTransportClient } from "@factum/gensyn-axl";
+import type { AttemptSummary } from "@factum/agent-sdk";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
-  markAxlWorkerError,
-  markAxlWorkerIdle,
   markAxlWorkerProcessed,
   markAxlWorkerProcessing,
   markAxlWorkerStarted
 } from "../services/axl-worker-health.service";
 import { ReflectionService } from "../services/reflection.service";
+import { runAxlRecvLoop } from "./axl-recv-runner";
 
 type ReflectionRequestEnvelope = {
   correlationId?: string;
   agent?: string;
   payload?: {
     attempt_id: string;
-    attempt_summary: Parameters<ReflectionService["summarizeAttempt"]>[0] extends never ? never : import("@factum/agent-sdk").AttemptSummary;
+    attempt_summary: AttemptSummary;
     success: boolean;
   };
   sentAt?: string;
 };
-
-async function sleep(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 async function main() {
   const client = new AxlTransportClient({ apiBaseUrl: config.GENSYN_AXL_API_URL });
@@ -37,30 +33,37 @@ async function main() {
 
   log("info", "axl_reflection_worker_started", {
     apiBaseUrl: config.GENSYN_AXL_API_URL,
-    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER
   });
 
-  while (true) {
-    try {
-      await markAxlWorkerIdle("reflection-agent");
-      const messages = await client.recv<ReflectionRequestEnvelope>();
-
+  await runAxlRecvLoop({
+    workerKey: "reflection-agent",
+    client,
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER,
+    logTag: "axl_reflection_worker",
+    handleMessages: async (messages) => {
       for (const message of messages) {
         if (message.topic !== "factum.reflection_agent") continue;
+        const envelope = message.data as ReflectionRequestEnvelope;
         await markAxlWorkerProcessing("reflection-agent");
-        if (!message.from || !message.data?.correlationId || !message.data.payload) continue;
+        if (!message.from || !envelope.correlationId || !envelope.payload) continue;
 
-        const summary = message.data.payload.attempt_summary;
-        const result = message.data.payload.success
+        const payload = envelope.payload;
+        const summary = payload.attempt_summary;
+        const result = payload.success
           ? service.reflectSuccess({
-              attemptId: message.data.payload.attempt_id,
+              attemptId: payload.attempt_id,
               attemptNumber: summary.attempt_number,
               bestModel: summary.model ?? "unknown",
               lift: summary.baseline_metric ?? 0,
               success: summary.significant ?? false
             })
           : service.reflectFailure({
-              attemptId: message.data.payload.attempt_id,
+              attemptId: payload.attempt_id,
               attemptNumber: summary.attempt_number,
               error: summary.error ?? "Unknown training error"
             });
@@ -69,21 +72,15 @@ async function main() {
           to: message.from,
           topic: "factum.reflection_agent.result",
           payload: {
-            correlationId: message.data.correlationId,
+            correlationId: envelope.correlationId,
             result
           }
         });
 
         await markAxlWorkerProcessed("reflection-agent");
       }
-    } catch (error) {
-      await markAxlWorkerError("reflection-agent", error);
-      logError("axl_reflection_worker_error", error);
-      await sleep(Math.max(config.GENSYN_AXL_POLL_INTERVAL_MS, 500));
     }
-
-    await sleep(config.GENSYN_AXL_POLL_INTERVAL_MS);
-  }
+  });
 }
 
 main().catch((error) => {

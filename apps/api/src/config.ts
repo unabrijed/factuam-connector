@@ -22,7 +22,13 @@ const envSchema = z.object({
   ML_WORKER_URL: z.string().default("http://localhost:8000"),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
-  OPENAI_API_KEY: z.string().min(1),
+  /** OpenCode HTTP API (run OpenCode server separately; see OpenCode docs). */
+  OPENCODE_BASE_URL: z.string().default("http://127.0.0.1:4096"),
+  /** Model as provider/model (e.g. opencode/gpt-5-nano). */
+  OPENCODE_MODEL: z.string().default("opencode/gpt-5-nano"),
+  /** Optional directory passed to OpenCode session APIs (project/workspace root). */
+  OPENCODE_DIRECTORY: z.string().optional(),
+  /** Default verifier model for Gensyn REE when `GENSYN_REE_VERIFIER_MODEL` is unset. */
   LLM_MODEL: z.string().default("gpt-4.1-mini"),
   LOCAL_UPLOAD_DIR: z.string().default("./uploads"),
   LOCAL_ARTIFACT_DIR: z.string().default("./artifacts"),
@@ -63,6 +69,10 @@ const envSchema = z.object({
   AXL_PEER_ANSWER: z.string().optional(),
   GENSYN_AXL_TIMEOUT_MS: z.coerce.number().default(1500),
   GENSYN_AXL_POLL_INTERVAL_MS: z.coerce.number().default(250),
+  /** Cap for exponential backoff when GET /recv returns empty (idle workers). */
+  GENSYN_AXL_IDLE_POLL_MAX_MS: z.coerce.number().default(5000),
+  /** Exit worker after N consecutive recv failures (0 = disabled). Use under process supervision. */
+  GENSYN_AXL_RECV_FATAL_AFTER: z.coerce.number().min(0).default(0),
   GENSYN_AXL_LOCAL_FALLBACK: z.coerce.boolean().default(true),
   REPLY_TIMEOUT_MS: z.coerce.number().default(120000),
   GENSYN_CHAIN_ENABLED: z.coerce.boolean().default(false),
@@ -97,7 +107,9 @@ export const config = envSchema.parse({
   ML_WORKER_URL: process.env.ML_WORKER_URL,
   DATABASE_URL: process.env.DATABASE_URL,
   REDIS_URL: process.env.REDIS_URL,
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  OPENCODE_BASE_URL: process.env.OPENCODE_BASE_URL,
+  OPENCODE_MODEL: process.env.OPENCODE_MODEL,
+  OPENCODE_DIRECTORY: process.env.OPENCODE_DIRECTORY?.trim() || undefined,
   LLM_MODEL: process.env.LLM_MODEL,
   LOCAL_UPLOAD_DIR: process.env.LOCAL_UPLOAD_DIR,
   LOCAL_ARTIFACT_DIR: process.env.LOCAL_ARTIFACT_DIR,
@@ -126,6 +138,8 @@ export const config = envSchema.parse({
   AXL_PEER_ANSWER: process.env.AXL_PEER_ANSWER,
   GENSYN_AXL_TIMEOUT_MS: process.env.GENSYN_AXL_TIMEOUT_MS,
   GENSYN_AXL_POLL_INTERVAL_MS: process.env.GENSYN_AXL_POLL_INTERVAL_MS,
+  GENSYN_AXL_IDLE_POLL_MAX_MS: process.env.GENSYN_AXL_IDLE_POLL_MAX_MS,
+  GENSYN_AXL_RECV_FATAL_AFTER: process.env.GENSYN_AXL_RECV_FATAL_AFTER,
   GENSYN_AXL_LOCAL_FALLBACK: process.env.GENSYN_AXL_LOCAL_FALLBACK,
   REPLY_TIMEOUT_MS: process.env.REPLY_TIMEOUT_MS,
   GENSYN_CHAIN_ENABLED: process.env.GENSYN_CHAIN_ENABLED,

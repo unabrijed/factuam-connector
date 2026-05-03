@@ -97,6 +97,7 @@ Use this when you want **one Go `axl/node`** on HTTP **:9002**, a **single mesh 
 - [ ] **Factum env:** set `GENSYN_AXL_API_URL` to the bridge used by the API (orchestrator side). Set each specialist **`AXL_PEER_*`** to the **64-hex** `our_public_key` from that role’s `/topology`. Alternatively, **`GENSYN_AXL_AGENT_PEERS`** can hold a JSON map of orchestrator agent names → hex keys; **per-agent `AXL_PEER_*` env vars win** when both are set (`apps/api/src/services/axl-agent-router.service.ts`). Malformed JSON logs a warning and behaves like an empty map.
 - [ ] **Strictness:** `FACTUM_MODE=gensyn`; turn off `GENSYN_AXL_LOCAL_FALLBACK` when you must not silently run in-process agents.
 - [ ] **Timeouts:** defaults are **`GENSYN_AXL_TIMEOUT_MS=1500`** and **`GENSYN_AXL_POLL_INTERVAL_MS=250`** (`apps/api/src/config.ts`). The 1.5s window is tight on slow hosts or WAN; increase timeout (and interval if needed) for production or flaky local meshes.
+- [ ] **TS worker `/recv` pacing:** specialist and unified workers use adaptive idle backoff — empty queues sleep up to **`GENSYN_AXL_IDLE_POLL_MAX_MS`** (default **5000**) after repeated HTTP **204** responses, instead of polling forever at the base interval alone. Set **`GENSYN_AXL_RECV_FATAL_AFTER`** (e.g. **30**) to **`process.exit(1)`** after that many consecutive **`recv`** failures (node down); **`0`** keeps the previous infinite-retry behavior on errors.
 - [ ] **REE / chain:** configure per environment (see README “Important env groups”).
 
 ---

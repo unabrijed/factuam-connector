@@ -5,31 +5,52 @@ import { ConnectorAcquisitionService } from "../services/connector-acquisition.s
 import { ConnectorRunService } from "../services/connector-run.service";
 import { getDatasetNameFromConnectorRequest } from "../lib/connectors";
 import { isExperimentTerminal } from "../lib/experiment-status";
+import { KaggleSuggestService } from "../services/kaggle-suggest.service";
+import { AppError } from "../lib/errors";
 
 const experimentService = new ExperimentService();
 const connectorAcquisition = new ConnectorAcquisitionService();
 const connectorRuns = new ConnectorRunService();
+const kaggleSuggest = new KaggleSuggestService();
 
-export async function createExperimentController(input: CreateExperimentInput) {
+export async function createExperimentController(parsed: CreateExperimentInput) {
+  let effective: CreateExperimentInput = parsed;
+
+  if (parsed.mode === "connector" && parsed.discoverKaggle && !parsed.connectorRequest) {
+    const best = await kaggleSuggest.pickBestForQuery(parsed.query);
+    if (!best) {
+      throw new AppError(
+        "No Kaggle dataset with a CSV file matched your prompt. Try a shorter search (e.g. “wine quality”) or choose a preset.",
+        400,
+        "kaggle_discover_empty"
+      );
+    }
+    effective = {
+      query: parsed.query,
+      mode: "connector",
+      connectorRequest: best.connectorRequest
+    };
+  }
+
   let connectorRunId: string | undefined;
-  if (input.mode === "connector") {
-    if (!input.connectorRequest) {
+  if (effective.mode === "connector") {
+    if (!effective.connectorRequest) {
       throw new Error("connectorRequest is required in connector mode");
     }
     const acquisition = await connectorAcquisition.acquireDataset({
-      request: input.connectorRequest,
-      datasetName: getDatasetNameFromConnectorRequest(input.connectorRequest)
+      request: effective.connectorRequest,
+      datasetName: getDatasetNameFromConnectorRequest(effective.connectorRequest)
     });
     connectorRunId = acquisition.runId;
-    input = { ...input, datasetId: acquisition.datasetId };
+    effective = { ...effective, datasetId: acquisition.datasetId };
   }
 
-  const result = await experimentService.createExperiment(input);
-  await enqueueExperiment({ experimentId: result.experimentId, datasetId: input.datasetId });
+  const result = await experimentService.createExperiment(effective);
+  await enqueueExperiment({ experimentId: result.experimentId, datasetId: effective.datasetId });
   await experimentService.appendProgress(result.experimentId, {
     stage: "enqueue",
     message: "Experiment created and queued for execution",
-    details: { datasetId: input.datasetId ?? null, mode: input.mode }
+    details: { datasetId: effective.datasetId ?? null, mode: effective.mode }
   });
   if (connectorRunId) {
     await connectorRuns.setStage(connectorRunId, {

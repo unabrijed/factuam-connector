@@ -2,13 +2,12 @@ import { AxlTransportClient } from "@factum/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
-  markAxlWorkerError,
-  markAxlWorkerIdle,
   markAxlWorkerProcessed,
   markAxlWorkerProcessing,
   markAxlWorkerStarted
 } from "../services/axl-worker-health.service";
 import { ExperimentPlannerService } from "../services/agents/experiment-planner.service";
+import { runAxlRecvLoop } from "./axl-recv-runner";
 
 type RequestEnvelope = {
   correlationId?: string;
@@ -19,10 +18,6 @@ type RequestEnvelope = {
   };
   sentAt?: string;
 };
-
-async function sleep(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 async function main() {
   const client = new AxlTransportClient({
@@ -38,40 +33,40 @@ async function main() {
 
   log("info", "axl_experiment_planner_worker_started", {
     apiBaseUrl: config.GENSYN_AXL_API_URL,
-    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER
   });
 
-  while (true) {
-    try {
-      await markAxlWorkerIdle("experiment-planner");
-      const messages = await client.recv<RequestEnvelope>();
-
+  await runAxlRecvLoop({
+    workerKey: "experiment-planner",
+    client,
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER,
+    logTag: "axl_experiment_planner_worker",
+    handleMessages: async (messages) => {
       for (const message of messages) {
         if (message.topic !== "factum.experiment_planner") continue;
+        const data = message.data as RequestEnvelope;
         await markAxlWorkerProcessing("experiment-planner");
-        if (!message.from || !message.data?.correlationId || !message.data.payload) continue;
+        if (!message.from || !data.correlationId || !data.payload) continue;
 
-        const result = await service.run(message.data.payload);
+        const result = await service.run(data.payload);
 
         await client.send({
           to: message.from,
           topic: "factum.experiment_planner.result",
           payload: {
-            correlationId: message.data.correlationId,
+            correlationId: data.correlationId,
             result
           }
         });
 
         await markAxlWorkerProcessed("experiment-planner");
       }
-    } catch (error) {
-      await markAxlWorkerError("experiment-planner", error);
-      logError("axl_experiment_planner_worker_error", error);
-      await sleep(Math.max(config.GENSYN_AXL_POLL_INTERVAL_MS, 500));
     }
-
-    await sleep(config.GENSYN_AXL_POLL_INTERVAL_MS);
-  }
+  });
 }
 
 main().catch((error) => {

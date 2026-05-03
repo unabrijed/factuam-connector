@@ -7,14 +7,10 @@ import type { ConnectorManifest, ConnectorPreset } from "../lib/api";
 import { getConnectorRun, getExperiment, sendExperimentMessage } from "../lib/api";
 import { appConfig } from "../lib/config";
 import { experimentPollIntervalMs, isExperimentTerminal } from "../lib/experiment-query";
-import { composeProgressLiveSubtitle } from "../lib/progress-details";
-import { AgentThinkingStrip } from "./agent-thinking-strip";
-import { ArtifactList } from "./artifact-list";
+import { AgentPipelinePanel } from "./agent-pipeline-panel";
 import { ChatComposer } from "./chat-composer";
 import { ChatTranscript } from "./chat-transcript";
-import { ConnectorStageTimeline } from "./connector-stage-timeline";
-import { ExperimentTimeline } from "./experiment-timeline";
-import { Badge, Button, Card, SectionTitle, formatLabel } from "./ui";
+import { Badge, Button, formatLabel } from "./ui";
 
 export type AppChatThreadProps = {
   experimentId: string;
@@ -39,7 +35,6 @@ export function AppChatThread({
   onUploadRun,
   experimentBusy = false
 }: AppChatThreadProps) {
-  const showDevDetails = process.env.NODE_ENV === "development";
   const queryClient = useQueryClient();
   const [guidance, setGuidance] = useState("");
   const [streamConnected, setStreamConnected] = useState(false);
@@ -124,48 +119,62 @@ export function AppChatThread({
   }
 
   const experiment = query.data;
-  const backtest = experiment.latestBacktest;
-  const receiptId = experiment.resultSummary?.receiptId as string | undefined;
-  const currentMessage = experiment.resultSummary?.currentMessage as string | undefined;
-  const currentStage = experiment.resultSummary?.currentStage as string | undefined;
-  const progress = Array.isArray(experiment.resultSummary?.progress)
-    ? (experiment.resultSummary?.progress as Array<{ stage?: string; message?: string; ts?: string; details?: Record<string, unknown> }>)
-    : [];
-  const attempts = Array.isArray(experiment.attempts)
-    ? (experiment.attempts as Array<{ id: string; attemptNumber: number; status: string; strategy?: string | null; notes?: string | null; summaryJson?: Record<string, unknown> | null }>)
-    : [];
-  const diagnoses = Array.isArray(experiment.diagnoses)
-    ? (experiment.diagnoses as Array<{ id: string; diagnosisJson?: Record<string, unknown>; createdAt?: string }>)
-    : [];
-  const reflections = Array.isArray(experiment.reflections)
-    ? (experiment.reflections as Array<{ id: string; reflectionJson?: Record<string, unknown>; createdAt?: string }>)
-    : [];
-  const decisions = Array.isArray(experiment.decisions)
-    ? (experiment.decisions as Array<{ id: string; attemptNumber: number; decisionJson?: Record<string, unknown>; createdAt?: string }>)
-    : [];
-  const messages = Array.isArray(experiment.messages)
-    ? (experiment.messages as Array<{ id: string; role: "user" | "agent" | "system"; message: string; createdAt?: string; metadata?: Record<string, unknown> | null }>)
-    : [];
   const terminal = isExperimentTerminal(experiment.status);
   const completedOk = experiment.status === "COMPLETED";
-  const connectorStage = connectorQuery.data?.sourceMeta?.stage as string | undefined;
-  const connectorStageMessage = connectorQuery.data?.sourceMeta?.stageMessage as string | undefined;
-  const connectorFailed = connectorStage === "failed";
+  const receiptId = experiment.resultSummary?.receiptId as string | undefined;
 
-  const statusLine = !terminal ? currentMessage ?? undefined : undefined;
-  const latestProgressEntry = progress.length ? progress[progress.length - 1] : null;
-  const statusDetailLine = !terminal ? composeProgressLiveSubtitle(latestProgressEntry ?? null) : undefined;
+  const progress = Array.isArray(experiment.resultSummary?.progress)
+    ? (experiment.resultSummary?.progress as Array<{
+        stage?: string;
+        message?: string;
+        ts?: string;
+        details?: Record<string, unknown>;
+      }>)
+    : [];
+
+  const messages = Array.isArray(experiment.messages)
+    ? (experiment.messages as Array<{
+        id: string;
+        role: "user" | "agent" | "system";
+        message: string;
+        createdAt?: string;
+        metadata?: Record<string, unknown> | null;
+      }>)
+    : [];
+
+  const attempts = Array.isArray(experiment.attempts)
+    ? (experiment.attempts as Array<{ attemptNumber: number; status: string }>)
+    : [];
+
+  const attemptCount = attempts.filter((a) => a.status !== "running").length + 1;
+  const confidence = experiment.confidence as string | undefined;
+  const backtest = experiment.latestBacktest as { liftOverBaseline: string } | undefined;
+  const connectorStage = connectorQuery.data?.sourceMeta?.stage as string | undefined;
+  const hasConnectorDetails = Boolean(connectorRunId);
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">
-      <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border)] px-4 py-2">
-        <Badge tone={completedOk ? "success" : terminal ? "danger" : "accent"}>{formatLabel(experiment.status)}</Badge>
-        <Badge tone={streamConnected ? "success" : "default"}>{streamConnected ? "Live" : "Polling"}</Badge>
-        {experiment.confidence ? <Badge>{formatLabel(experiment.confidence)}</Badge> : null}
-        {connectorStage && !terminal ? <Badge tone="warning">{formatLabel(connectorStage)}</Badge> : null}
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--border)] px-4 py-2">
+        <Badge tone={completedOk ? "success" : terminal ? "danger" : "accent"}>
+          {completedOk ? "Complete" : terminal ? formatLabel(experiment.status) : "Running"}
+        </Badge>
+        {confidence ? <Badge tone="success">{formatLabel(confidence)}</Badge> : null}
+        {!terminal ? <Badge tone="default">{streamConnected ? "Live" : "Syncing"}</Badge> : null}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
+      {progress.length > 0 ? (
+        <div className="shrink-0 px-4 pt-3">
+          <AgentPipelinePanel
+            progress={progress}
+            experimentStatus={experiment.status}
+            terminal={terminal}
+            attemptCount={attemptCount}
+            maxAttempts={4}
+          />
+        </div>
+      ) : null}
+
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         <ChatTranscript
           initialQuery={experiment.query ?? ""}
           messages={messages}
@@ -175,141 +184,22 @@ export function AppChatThread({
           errorMessage={experiment.errorMessage}
           statusLabel={formatLabel(experiment.status)}
           receiptId={receiptId}
-          statusLine={statusLine ?? null}
-          statusDetailLine={statusDetailLine ?? null}
-          connectorLine={!terminal ? connectorStageMessage ?? null : null}
         />
 
-        {!terminal ? (
-          <AgentThinkingStrip
-            progress={progress}
-            latestStage={typeof currentStage === "string" ? currentStage : undefined}
-            experimentStatus={experiment.status}
-            terminal={false}
-          />
-        ) : progress.length > 0 ? (
-          <AgentThinkingStrip
-            progress={progress}
-            latestStage={typeof currentStage === "string" ? currentStage : undefined}
-            experimentStatus={experiment.status}
-            terminal
-          />
-        ) : null}
-
-        <details className="rounded-[20px] border border-[var(--border)] bg-[var(--surface-strong)]/50 text-sm">
-          <summary className="cursor-pointer px-4 py-3 font-medium text-[var(--text)]">Run details &amp; artifacts</summary>
-          <div className="space-y-4 border-t border-[var(--border)] p-4">
-            {!completedOk ? (
-              <Card>
-                <SectionTitle title="Experiment timeline" />
-                <ExperimentTimeline status={experiment.status} />
-              </Card>
-            ) : null}
-
-            {connectorRunId ? (
-              <Card>
-                <SectionTitle title="Connector" />
-                <div className="space-y-3">
-                  {connectorStageMessage ? <p className="text-sm text-[var(--text-soft)]">{connectorStageMessage}</p> : null}
-                  <ConnectorStageTimeline stage={connectorStage} failed={connectorFailed} />
-                </div>
-              </Card>
-            ) : null}
-
-            {terminal && (experiment.confidence || backtest) ? (
-              <Card className="space-y-2">
-                <SectionTitle title="Summary" />
-                <div className="grid gap-2 text-sm text-[var(--text-soft)] sm:grid-cols-3">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.16em] text-[var(--muted)]">Confidence</div>
-                    <div className="mt-1 text-[var(--text)]">{experiment.confidence ?? "—"}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.16em] text-[var(--muted)]">Lift</div>
-                    <div className="mt-1 text-[var(--text)]">{backtest ? `${Number(backtest.liftOverBaseline).toFixed(2)}%` : "—"}</div>
-                  </div>
-                </div>
-              </Card>
-            ) : null}
-
-            {showDevDetails ? (
-              <Card>
-                <SectionTitle title="Debug JSON" />
-                <pre className="overflow-x-auto rounded-[24px] border border-[var(--border)] bg-[var(--surface-strong)] p-4 text-xs leading-6 text-[var(--text-soft)]">
-                  {JSON.stringify({ experimentPlan: experiment.experimentPlan, resultSummary: experiment.resultSummary }, null, 2)}
-                </pre>
-              </Card>
-            ) : null}
-
-            {diagnoses.length ? (
-              <Card className="space-y-3">
-                <SectionTitle title="Dataset diagnosis" />
-                {(() => {
-                  const diagnosis = (diagnoses[diagnoses.length - 1]?.diagnosisJson ?? {}) as Record<string, unknown>;
-                  return (
-                    <div className="space-y-3">
-                      <p className="text-sm text-[var(--text)]">{String(diagnosis.summary ?? "—")}</p>
-                      <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-3 text-[11px] leading-5 text-[var(--text-soft)]">
-                        {JSON.stringify(diagnosis, null, 2)}
-                      </pre>
-                    </div>
-                  );
-                })()}
-              </Card>
-            ) : null}
-
-            {decisions.length ? (
-              <Card className="space-y-3">
-                <SectionTitle title="Strategy decisions" />
-                <div className="space-y-3">
-                  {decisions.map((decision) => (
-                    <div key={decision.id} className="rounded-[22px] border border-[var(--border)] p-4">
-                      <Badge tone="accent" className="mb-2">
-                        Attempt {decision.attemptNumber}
-                      </Badge>
-                      <pre className="overflow-x-auto whitespace-pre-wrap text-[11px] leading-5 text-[var(--text-soft)]">
-                        {JSON.stringify(decision.decisionJson ?? {}, null, 2)}
-                      </pre>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ) : null}
-
-            {attempts.length ? (
-              <Card className="space-y-3">
-                <SectionTitle title="Attempts" />
-                <div className="space-y-3">
-                  {attempts.map((attempt) => (
-                    <div key={attempt.id} className="rounded-[22px] border border-[var(--border)] p-4">
-                      <div className="flex flex-wrap gap-2">
-                        <Badge tone="accent">#{attempt.attemptNumber}</Badge>
-                        <Badge>{formatLabel(attempt.status)}</Badge>
-                      </div>
-                      {attempt.notes ? <p className="mt-2 text-sm text-[var(--text-soft)]">{attempt.notes}</p> : null}
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ) : null}
-
-            {reflections.length ? (
-              <Card className="space-y-3">
-                <SectionTitle title="Reflections" />
-                {reflections.map((reflection) => (
-                  <pre
-                    key={reflection.id}
-                    className="overflow-x-auto whitespace-pre-wrap rounded-xl border border-[var(--border)] bg-[var(--surface-strong)] p-3 text-[11px]"
-                  >
-                    {JSON.stringify(reflection.reflectionJson ?? {}, null, 2)}
-                  </pre>
-                ))}
-              </Card>
-            ) : null}
-
-            {completedOk && !receiptId ? <ArtifactList artifacts={experiment.artifacts ?? []} /> : null}
+        {terminal ? (
+          <div className="mt-3 rounded-[20px] border border-[var(--border)] bg-[var(--surface-strong)]/60 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--text-soft)]">
+              {confidence ? <span>Confidence: <span className="text-[var(--text)]">{formatLabel(confidence)}</span></span> : null}
+              {backtest ? <span>Lift: <span className="text-[var(--text)]">{Number(backtest.liftOverBaseline).toFixed(2)}%</span></span> : null}
+              {hasConnectorDetails ? <span>Connector: <span className="text-[var(--text)]">{formatLabel(connectorStage ?? "?" )}</span></span> : null}
+              {receiptId ? (
+                <Link href={`/proofs/${receiptId}`} className="ml-auto text-[var(--accent)] hover:underline">
+                  Open proof
+                </Link>
+              ) : null}
+            </div>
           </div>
-        </details>
+        ) : null}
       </div>
 
       <ChatComposer

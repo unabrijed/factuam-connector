@@ -96,6 +96,8 @@ export async function createExperiment(input: {
   datasetId?: string;
   mode?: "upload" | "connector";
   connectorRequest?: ConnectorRequest;
+  /** Server searches Kaggle (HTTP API) for a CSV-backed dataset matching `query`; omit when using a preset or explicit connectorRequest. */
+  discoverKaggle?: boolean;
 }) {
   const response = await fetch(`${appConfig.apiUrl}/api/experiments`, {
     method: "POST",
@@ -126,6 +128,26 @@ export async function getKagglePresets(): Promise<KagglePreset[]> {
     throw new Error(await getErrorMessage(response, "Failed to load Kaggle presets"));
   }
   return response.json();
+}
+
+export async function suggestKaggleDatasets(input: { query: string; limit?: number }) {
+  const response = await fetch(`${appConfig.apiUrl}/api/connectors/kaggle/suggest`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input)
+  });
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response, "Failed to search Kaggle datasets"));
+  }
+  return response.json() as Promise<{
+    candidates: Array<{
+      ref: string;
+      title: string;
+      subtitle?: string;
+      selectedFile: string;
+      connectorRequest: ConnectorRequest;
+    }>;
+  }>;
 }
 
 export async function getExperiment(experimentId: string) {

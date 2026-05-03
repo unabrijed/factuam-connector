@@ -2,13 +2,12 @@ import { AxlTransportClient } from "@factum/gensyn-axl";
 import { config } from "../config";
 import { log, logError } from "../lib/logger";
 import {
-  markAxlWorkerError,
-  markAxlWorkerIdle,
   markAxlWorkerProcessed,
   markAxlWorkerProcessing,
   markAxlWorkerStarted
 } from "../services/axl-worker-health.service";
 import { VerifierService } from "../services/agents/verifier.service";
+import { runAxlRecvLoop } from "./axl-recv-runner";
 
 type VerifierRequestEnvelope = {
   correlationId?: string;
@@ -16,10 +15,6 @@ type VerifierRequestEnvelope = {
   payload?: unknown;
   sentAt?: string;
 };
-
-async function sleep(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 async function main() {
   const client = new AxlTransportClient({
@@ -35,27 +30,33 @@ async function main() {
 
   log("info", "axl_verifier_worker_started", {
     apiBaseUrl: config.GENSYN_AXL_API_URL,
-    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER
   });
 
-  while (true) {
-    try {
-      await markAxlWorkerIdle("verifier");
-      const messages = await client.recv<VerifierRequestEnvelope>();
-
+  await runAxlRecvLoop({
+    workerKey: "verifier",
+    client,
+    pollIntervalMs: config.GENSYN_AXL_POLL_INTERVAL_MS,
+    idlePollMaxMs: config.GENSYN_AXL_IDLE_POLL_MAX_MS,
+    recvFatalAfter: config.GENSYN_AXL_RECV_FATAL_AFTER,
+    logTag: "axl_verifier_worker",
+    handleMessages: async (messages) => {
       for (const message of messages) {
         if (message.topic !== "factum.verifier") continue;
+        const data = message.data as VerifierRequestEnvelope;
         await markAxlWorkerProcessing("verifier");
         if (!message.from) continue;
-        if (!message.data?.correlationId) continue;
+        if (!data.correlationId) continue;
 
-        const result = await verifier.run(message.data.payload);
+        const result = await verifier.run(data.payload);
 
         await client.send({
           to: message.from,
           topic: "factum.verifier.result",
           payload: {
-            correlationId: message.data.correlationId,
+            correlationId: data.correlationId,
             result
           }
         });
@@ -63,18 +64,12 @@ async function main() {
         await markAxlWorkerProcessed("verifier");
 
         log("info", "axl_verifier_request_processed", {
-          correlationId: message.data.correlationId,
+          correlationId: data.correlationId,
           from: message.from
         });
       }
-    } catch (error) {
-      await markAxlWorkerError("verifier", error);
-      logError("axl_verifier_worker_error", error);
-      await sleep(Math.max(config.GENSYN_AXL_POLL_INTERVAL_MS, 500));
     }
-
-    await sleep(config.GENSYN_AXL_POLL_INTERVAL_MS);
-  }
+  });
 }
 
 main().catch((error) => {
