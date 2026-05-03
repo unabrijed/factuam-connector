@@ -1,11 +1,11 @@
 {
   "worker": "answer-generator",
   "status": "idle",
-  "pid": 92802,
+  "pid": 40477,
   "apiBaseUrl": "http://127.0.0.1:9002",
   "pollIntervalMs": 250,
   "startedAt": "2026-05-02T20:14:36.974Z",
-  "updatedAt": "2026-05-03T12:04:00.481Z",
+  "updatedAt": "2026-05-03T14:22:52.826Z",
   "processedCount": 0,
   "lastErrorAt": "2026-05-02T20:15:11.698Z",
   "lastErrorMessage": "fetch failed"

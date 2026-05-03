@@ -1,11 +1,11 @@
 {
   "worker": "diagnosis-agent",
   "status": "idle",
-  "pid": 92783,
+  "pid": 40443,
   "apiBaseUrl": "http://127.0.0.1:9002",
   "pollIntervalMs": 250,
   "startedAt": "2026-05-02T20:14:33.701Z",
-  "updatedAt": "2026-05-03T12:04:00.262Z",
+  "updatedAt": "2026-05-03T14:22:52.269Z",
   "lastProcessedAt": "2026-05-03T08:44:16.013Z",
   "processedCount": 1,
   "lastErrorAt": "2026-05-02T20:15:11.698Z",

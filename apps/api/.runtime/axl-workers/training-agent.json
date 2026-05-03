@@ -1,11 +1,11 @@
 {
   "worker": "training-agent",
   "status": "idle",
-  "pid": 92784,
+  "pid": 40536,
   "apiBaseUrl": "http://127.0.0.1:9002",
   "pollIntervalMs": 250,
   "startedAt": "2026-05-02T20:15:03.392Z",
-  "updatedAt": "2026-05-03T12:04:00.202Z",
+  "updatedAt": "2026-05-03T14:22:53.530Z",
   "processedCount": 0,
   "lastErrorAt": "2026-05-02T20:15:11.695Z",
   "lastErrorMessage": "fetch failed"

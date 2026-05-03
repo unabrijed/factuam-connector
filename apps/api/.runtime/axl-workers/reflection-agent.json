@@ -1,11 +1,11 @@
 {
   "worker": "reflection-agent",
   "status": "idle",
-  "pid": 92793,
+  "pid": 40533,
   "apiBaseUrl": "http://127.0.0.1:9002",
   "pollIntervalMs": 250,
   "startedAt": "2026-05-02T20:14:50.048Z",
-  "updatedAt": "2026-05-03T12:04:00.492Z",
+  "updatedAt": "2026-05-03T14:22:53.530Z",
   "processedCount": 0,
   "lastErrorAt": "2026-05-02T20:15:11.675Z",
   "lastErrorMessage": "fetch failed"

@@ -4,6 +4,8 @@ import { type ReactNode } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { Badge, formatLabel } from "./ui";
+import { AgentPipelinePanel } from "./agent-pipeline-panel";
+import type { ProgressEntry } from "../lib/thinking-narrative";
 
 export type ChatMessage = {
   id: string;
@@ -22,6 +24,10 @@ type ChatTranscriptProps = {
   errorMessage?: string | null;
   statusLabel: string;
   receiptId?: string;
+  progress: ProgressEntry[];
+  experimentStatus?: string;
+  attemptCount?: number;
+  maxAttempts?: number;
 };
 
 function Bubble({
@@ -66,13 +72,31 @@ export function ChatTranscript({
   completedOk,
   errorMessage,
   statusLabel,
-  receiptId
+  receiptId,
+  progress,
+  experimentStatus,
+  attemptCount,
+  maxAttempts
 }: ChatTranscriptProps) {
   return (
     <div className="flex flex-col gap-3 pb-4">
       <Bubble role="user">
         <p className="whitespace-pre-wrap">{initialQuery || "—"}</p>
       </Bubble>
+
+      {progress.length > 0 ? (
+        <div className="flex w-full justify-start">
+          <div className="max-w-[min(100%,40rem)] w-full">
+            <AgentPipelinePanel
+              progress={progress}
+              experimentStatus={experimentStatus}
+              terminal={terminal}
+              attemptCount={attemptCount}
+              maxAttempts={maxAttempts}
+            />
+          </div>
+        </div>
+      ) : null}
 
       {messages.map((m) => (
         <Bubble key={m.id} role={m.role === "user" ? "user" : "assistant"}>
